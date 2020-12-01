@@ -3,9 +3,9 @@ steps:
     name: 'gcr.io/$PROJECT_ID/docker-compose'
     args: ['-f', 'docker-compose.prod.yaml', 'up', '-d']
 
-  - id: "Rodando docker ps"
-    name: 'gcr.io/cloud-builders/docker'
-    args: ['ps']
+  - id: "Chown in /var/www"
+    name: 'docker'
+    args: ['exec','-u','root','-t','app','chown','-R','www-data:www-data','/var/www']
 
   - id: "Rodando composer"
     name: 'gcr.io/cloud-builders/docker'

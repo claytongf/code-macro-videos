@@ -94,7 +94,7 @@ class GenreControllerTest extends TestCase
         ]);
         $id = $response->json('id');
         $genre = Genre::find($id);
-        dd($genre);
+
         $response->assertStatus(201)
             ->assertJson($genre->toArray());
         $this->assertTrue($response->json('is_active'));

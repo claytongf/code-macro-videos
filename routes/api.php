@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CastMemberController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\GenreController;
 use Illuminate\Http\Request;
@@ -23,3 +24,4 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 $exceptCreateAndEdit = ['create', 'edit'];
 Route::resource('categories', CategoryController::class)->except($exceptCreateAndEdit);
 Route::resource('genres', GenreController::class)->except($exceptCreateAndEdit);
+Route::resource('cast_members', CastMemberController::class)->except($exceptCreateAndEdit);

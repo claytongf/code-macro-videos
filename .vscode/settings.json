@@ -17,5 +17,9 @@
     "optimize autoloader",
     "vscode",
     "yml"
+  ],
+  "cSpell.words": [
+    "entrypoint",
+    "initdb"
   ]
 }

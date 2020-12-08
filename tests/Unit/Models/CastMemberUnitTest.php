@@ -2,20 +2,20 @@
 
 namespace Tests\Unit\Models;
 
-use App\Models\Category;
+use App\Models\CastMember;
 use App\Models\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPUnit\Framework\TestCase;
 
-class CategoryUnitTest extends TestCase
+class CastMemberUnitTest extends TestCase
 {
-    private $category;
+    private $castMember;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->category = new Category();
+        $this->castMember = new CastMember();
     }
 
     /**
@@ -25,8 +25,8 @@ class CategoryUnitTest extends TestCase
      */
     public function testFillableAttribute()
     {
-        $fillable = ['name', 'description', 'is_active'];
-        $this->assertEquals($fillable, $this->category->getFillable());
+        $fillable = ['name', 'type'];
+        $this->assertEquals($fillable, $this->castMember->getFillable());
     }
 
     public function testIfUseTraits()
@@ -34,24 +34,24 @@ class CategoryUnitTest extends TestCase
         $traits = [
             HasFactory::class, SoftDeletes::class, Uuid::class
         ];
-        $categoryTraits = array_keys(class_uses(Category::class));
-        $this->assertEquals($traits, $categoryTraits);
+        $castMemberTraits = array_keys(class_uses(CastMember::class));
+        $this->assertEquals($traits, $castMemberTraits);
     }
 
     public function testCastsAttribute()
     {
-        $casts = ['id' => 'string', 'deleted_at' => 'datetime', 'is_active' => 'boolean'];
-        $this->assertEquals($casts, $this->category->getCasts());
+        $casts = ['id' => 'string', 'deleted_at' => 'datetime', 'type' => 'integer'];
+        $this->assertEquals($casts, $this->castMember->getCasts());
     }
 
     public function testDatesAttribute()
     {
         $dates = ['deleted_at', 'created_at', 'updated_at'];
-        $this->assertEquals($dates, $this->category->getDates());
+        $this->assertEquals($dates, $this->castMember->getDates());
     }
 
     public function testIncrementing()
     {
-        $this->assertFalse($this->category->incrementing);
+        $this->assertFalse($this->castMember->incrementing);
     }
 }

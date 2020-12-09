@@ -182,7 +182,10 @@ class VideoControllerTest extends TestCase
         ];
 
         foreach ($data as $key => $value) {
-            $response = $this->assertStore($value['send_data'], $value['test_data'] + ['deleted_at' => null]);
+            $response = $this->assertStore(
+                $value['send_data'],
+                $value['test_data'] + ['deleted_at' => null]
+            );
             $response->assertJsonStructure([
                 'created_at',
                 'updated_at'
@@ -191,7 +194,7 @@ class VideoControllerTest extends TestCase
                 $response->json('id'),
                 $value['send_data']['categories_id'][0]
             );
-            $this->assertHasCategory(
+            $this->assertHasGenre(
                 $response->json('id'),
                 $value['send_data']['genres_id'][0]
             );
@@ -300,7 +303,9 @@ class VideoControllerTest extends TestCase
 
         $controller->shouldReceive('validate')
             ->withAnyArgs()
-            ->andReturn($this->sendData);
+            ->andReturn([
+                'name' => 'Test'
+            ]);
 
         $controller->shouldReceive('rulesUpdate')
             ->withAnyArgs()
@@ -313,7 +318,7 @@ class VideoControllerTest extends TestCase
 
         $hasError = false;
         try {
-            $controller->store($request);
+            $controller->update($request, 1);
         } catch (TestException $th) {
             $this->assertCount(1, Video::all());
             $hasError = true;

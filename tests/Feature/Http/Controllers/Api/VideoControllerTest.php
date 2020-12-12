@@ -262,26 +262,26 @@ class VideoControllerTest extends TestCase
         }
     }
 
-    // public function testUpdateWithFiles()
-    // {
-    //     Storage::fake();
-    //     $files = $this->getFiles();
+    public function testUpdateWithFiles()
+    {
+        Storage::fake();
+        $files = $this->getFiles();
 
-    //     $category = Category::factory(1)->create()->first();
-    //     $genre = Genre::factory(1)->create()->first();
-    //     $genre->categories()->sync($category->id);
+        $category = Category::factory(1)->create()->first();
+        $genre = Genre::factory(1)->create()->first();
+        $genre->categories()->sync($category->id);
 
-    //     $response = $this->json('PUT', $this->routeUpdate(), $this->sendData + [
-    //         'categories_id' => [$category->id],
-    //         'genres_id' => [$genre->id]
-    //     ] + $files);
+        $response = $this->json('PUT', $this->routeUpdate(), $this->sendData + [
+            'categories_id' => [$category->id],
+            'genres_id' => [$genre->id]
+        ] + $files);
 
-    //     $response->assertStatus(200);
-    //     $id = $response->json('id');
-    //     foreach ($files as $file) {
-    //         Storage::assertExists("$id/{$file->hashName()}");
-    //     }
-    // }
+        $response->assertStatus(200);
+        $id = $response->json('id');
+        foreach ($files as $file) {
+            Storage::assertExists("$id/{$file->hashName()}");
+        }
+    }
 
     protected function getFiles()
     {

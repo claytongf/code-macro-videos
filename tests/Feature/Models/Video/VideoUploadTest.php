@@ -6,6 +6,7 @@ use App\Models\Video;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Events\TransactionCommitted;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Tests\Exceptions\TestException;
 
@@ -93,5 +94,44 @@ class VideoUploadTest extends BaseVideoTestCase
         }
 
         $this->assertTrue($hasError);
+    }
+
+    public function testFileUrlWithLocalDriver()
+    {
+        $fileFields = [];
+        foreach (Video::$fileFields as $field) {
+            $fileFields[$field] = "$field.test";
+        }
+        $video = Video::factory(1)->create($fileFields)->first();
+        $localDriver = config('filesystems.default');
+        $baseUrl = config('filesystems.disks.' . $localDriver)['url'];
+        foreach ($fileFields as $field => $value) {
+            $fileUrl = $video->{"{$field}_url"};
+            $this->assertEquals("{$baseUrl}/$video->id/$value", $fileUrl);
+        }
+    }
+
+    public function testFileUrlWithGcsDriver()
+    {
+        $fileFields = [];
+        foreach (Video::$fileFields as $field) {
+            $fileFields[$field] = "$field.test";
+        }
+        $video = Video::factory(1)->create($fileFields)->first();
+        $baseUrl = config('filesystems.disks.gcs.storage_api_uri');
+        Config::set('filesystems.default', 'gcs');
+        foreach ($fileFields as $field => $value) {
+            $fileUrl = $video->{"{$field}_url"};
+            $this->assertEquals("{$baseUrl}/$video->id/$value", $fileUrl);
+        }
+    }
+
+    public function testFileUrlIfNullWhenFieldsAreNull()
+    {
+        $video = Video::factory(1)->create()->first();
+        foreach (Video::$fileFields as $field) {
+            $fileUrl = $video->{"{$field}_url"};
+            $this->assertNull($fileUrl);
+        }
     }
 }

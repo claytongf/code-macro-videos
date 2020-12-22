@@ -1,4 +1,5 @@
 <?php
+$origins = env('CORS_ORIGINS', []);
 
 return [
 
@@ -19,7 +20,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => explode(",", $origins),
 
     'allowed_origins_patterns' => [],
 

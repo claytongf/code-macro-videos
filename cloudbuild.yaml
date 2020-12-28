@@ -14,12 +14,16 @@ steps:
       - TESTING_PROD=true
 
   - id: "Chown in /var/www"
-    name: 'docker'
+    name: 'gcr.io/cloud-builders/docker'
     args: ['exec','-u','root','-t','micro-videos-app','chown','-R','www-data:www-data','/var/www']
 
   - id: "Indo para backend"
-    name: 'gcr.io/cloud-builders/docker'
-    args: ['exec', '-t', 'micro-videos-app', 'cd', 'backend']
+    name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+          cd backend
 
   - id: "Rodando composer"
     name: 'gcr.io/cloud-builders/docker'

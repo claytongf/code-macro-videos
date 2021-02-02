@@ -17,7 +17,8 @@ export const Form = () => {
     const classes = useStyles()
     const buttonProps: ButtonProps = {
         className: classes.submit,
-        variant: "outlined",
+        color: 'secondary',
+        variant: "contained",
     }
     const [categories, setCategories] = React.useState<any[]>([])
     const {register, handleSubmit, getValues, setValue, watch} = useForm({

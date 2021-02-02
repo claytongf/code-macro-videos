@@ -7,19 +7,19 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Location } from 'history'
 import routes from '../routes';
 import RouteParser from 'route-parser'
-import { Box, Container, makeStyles } from '@material-ui/core';
+import { Box, Container, makeStyles, Theme } from '@material-ui/core';
 
 const breadcrumbNameMap: {[key: string]: string} = {};
 routes.forEach( route => breadcrumbNameMap[route.path as string] = route.label)
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((theme: Theme) => ({
   linkRouter: {
-    color: "#4db5ab",
+    color: theme.palette.secondary.main,
     "&:focus, &:active": {
-      color: "#4db5ab"
+      color: theme.palette.secondary.main
     },
     "&:hover": {
-      color: "#055a52"
+      color: theme.palette.secondary.dark
     }
   }
 }));
@@ -66,7 +66,7 @@ export default function Breadcrumbs() {
 
   return (
       <Container>
-        <Box paddingBottom={2}>
+        <Box paddingBottom={2} paddingTop={2}>
           <Route>
             {
               ({location}: {location: Location}) => makeBreadcrumb(location)

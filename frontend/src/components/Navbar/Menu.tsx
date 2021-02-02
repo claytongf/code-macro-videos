@@ -1,17 +1,16 @@
-// @flow
 import * as React from 'react';
 import { IconButton, Menu as MuiMenu, MenuItem  } from '@material-ui/core';
 import MenuIcon from "@material-ui/icons/Menu";
 import routes, {MyRouteProps} from '../../routes';
 import { Link } from 'react-router-dom';
 
-const listRoutes = [
-    'dashboard',
-    'categories.list',
-    'genres.list',
-    'cast_members.list'
-]
-const menuRoutes = routes.filter(route => listRoutes.includes(route.name))
+const listRoutes = {
+    'dashboard': 'Dashboard',
+    'categories.list': 'Categorias',
+    'genres.list': 'Gêneros',
+    'cast_members.list': 'Membros de elenco',
+}
+const menuRoutes = routes.filter(route => Object.keys(listRoutes).includes(route.name))
 
 export const Menu = () => {
 
@@ -36,7 +35,7 @@ export const Menu = () => {
                 getContentAnchorEl={null}
             >
                 {
-                    listRoutes.map(
+                    Object.keys(listRoutes).map(
                         (routeName, key) => {
                             const route = menuRoutes.find(route=>route.name === routeName) as MyRouteProps
                             return (

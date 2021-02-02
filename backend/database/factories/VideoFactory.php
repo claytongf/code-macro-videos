@@ -29,10 +29,10 @@ class VideoFactory extends Factory
             'opened' => rand(0, 1),
             'rating' => $rating,
             'duration' => rand(1, 30),
-            // 'thumb_file' => null,
-            // 'banner_file' => null,
-            // 'trailer_file' => null,
-            // 'video_file' => null,
+            'thumb_file' => $this->faker->uuid . '.jpg',
+            'banner_file' => $this->faker->uuid . '.jpg',
+            'trailer_file' => $this->faker->uuid . '.mp4',
+            'video_file' => $this->faker->uuid . '.mp4',
             // 'published' => rand(0, 1)
         ];
     }

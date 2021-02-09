@@ -1,7 +1,7 @@
 import { Box, Button, ButtonProps, Checkbox, makeStyles, TextField, Theme } from '@material-ui/core';
 import * as React from 'react';
 import categoryHttp from '../../util/http/category-http';
-import * as yup from 'yup'
+import * as yup from '../../util/vendor/yup'
 import { useForm } from "react-hook-form"
 
 const useStyles = makeStyles((theme: Theme) => {
@@ -57,10 +57,10 @@ export const Form = () => {
             name: yup.string().label('Nome').required("Required"),
           }),
         []
-      );
-      const resolver = useYupValidationResolver(validationSchema);
+    );
+    const resolver = useYupValidationResolver(validationSchema);
 
-    const {register, handleSubmit, getValues, errors} = useForm({resolver})
+    const {register, handleSubmit, getValues, errors} = useForm<{name: string}>({resolver})
 
     function onSubmit(formData, event){
         categoryHttp.create(formData).then((response) => console.log(response))

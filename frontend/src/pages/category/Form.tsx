@@ -134,20 +134,20 @@ export const Form = () => {
                 InputLabelProps={{ shrink:true }}
             />
             <FormControlLabel
-            disabled={loading}
-                control={
-                    <Checkbox
-                        name="is_active"
-                        color={"primary"}
-                        inputRef={register}
-                        onChange={
-                            () => setValue('is_active', !getValues()['is_active'])
-                        }
-                        checked={watch('is_active')}
-                    />
-                }
-                label={'Ativo?'}
-                labelPlacement={'end'}
+              disabled={loading}
+              control={
+                  <Checkbox
+                      name="is_active"
+                      color={"primary"}
+                      onChange={
+                          () => setValue('is_active', !getValues()['is_active'])
+                      }
+                      checked={watch('is_active')}
+                      disabled={loading}
+                  />
+              }
+              label={'Ativo?'}
+              labelPlacement={'end'}
             />
             <Box dir={"rtl"}>
                 <Button

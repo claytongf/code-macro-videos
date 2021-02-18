@@ -113,6 +113,7 @@ export const Form = () => {
                 setLoading(false)
             }
         }
+        loadData()
     }, [])
 
     async function onSubmit(formData, event){

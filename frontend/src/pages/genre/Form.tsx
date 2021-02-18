@@ -57,7 +57,7 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, categories_id: Array<any>}>({resolver,
+    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, categories_id: any}>({resolver,
         defaultValues: {
             categories_id: []
         }
@@ -186,7 +186,7 @@ export const Form = () => {
                 }}
                 disabled={loading}
                 error={errors.categories_id !== undefined}
-                helperText={errors.categories_id && errors.categories_id[0].message}
+                helperText={errors.categories_id && errors.categories_id.message}
                 InputLabelProps={{ shrink: true }}
             >
                 <MenuItem value="" disabled>

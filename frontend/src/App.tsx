@@ -1,4 +1,5 @@
 import { Box, CssBaseline, MuiThemeProvider } from '@material-ui/core';
+import { SnackbarProvider } from './components/SnackbarProvider';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import './App.css';
@@ -11,14 +12,16 @@ function App() {
   return (
       <React.Fragment>
           <MuiThemeProvider theme={theme}>
-            <CssBaseline/>
-            <BrowserRouter>
-                <Navbar/>
-                <Box paddingTop={'70px'}>
-                    <Breadcrumbs/>
-                    <AppRouter/>
-                </Box>
-            </BrowserRouter>
+            <SnackbarProvider>
+                <CssBaseline/>
+                <BrowserRouter>
+                    <Navbar/>
+                    <Box paddingTop={'70px'}>
+                        <Breadcrumbs/>
+                        <AppRouter/>
+                    </Box>
+                </BrowserRouter>
+            </SnackbarProvider>
           </MuiThemeProvider>
       </React.Fragment>
   );

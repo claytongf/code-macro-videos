@@ -4,6 +4,7 @@ import categoryHttp from '../../util/http/category-http';
 import * as yup from '../../util/vendor/yup'
 import { useForm } from "react-hook-form"
 import { useHistory, useParams } from 'react-router';
+import { useSnackbar } from 'notistack';
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -45,8 +46,6 @@ const useYupValidationResolver = validationSchema =>
   );
 
 export const Form = () => {
-    const classes = useStyles()
-
     const validationSchema = React.useMemo(
         () =>
           yup.object({
@@ -55,11 +54,11 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
+    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, is_active: boolean}>({resolver, defaultValues: {is_active: true}})
 
-    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, is_active: boolean}>({resolver})
-
+    const classes = useStyles()
+    const snackbar = useSnackbar();
     const history = useHistory()
-
     const {id} = useParams<{id:string}>()
     const [category, setCategory] = React.useState<{id: string} | null>(null)
     const [loading, setLoading] = React.useState<boolean>(false)
@@ -79,23 +78,36 @@ export const Form = () => {
         if(!id){
             return
         }
-        setLoading(true)
-        categoryHttp
-            .get(id)
-            .then(({data}) => {
+        async function getCategory(){
+            setLoading(true)
+            try{
+                const {data} = await categoryHttp.get(id)
                 setCategory(data.data)
                 reset(data.data)
-            })
-            .finally(() => setLoading(false))
+            } catch (error) {
+                console.log(error);
+                snackbar.enqueueSnackbar(
+                    'Não foi possível carregar as informações',
+                    {variant: 'error'}
+                )
+            } finally {
+                setLoading(false)
+            }
+        }
+        getCategory()
     }, [])
 
-    function onSubmit(formData, event){
+    async function onSubmit(formData, event){
         setLoading(true)
-        const http = !category
-            ? categoryHttp.create(formData)
-            : categoryHttp.update(category.id, formData)
-        http
-            .then(({data}) => {
+        try {
+            const http = !category
+                ? categoryHttp.create(formData)
+                : categoryHttp.update(category.id, formData)
+                const {data} = await http
+                snackbar.enqueueSnackbar(
+                    'Categoria salva com sucesso',
+                    {variant: 'success'}
+                )
                 setTimeout(() => {
                     event ? (
                         id
@@ -103,8 +115,15 @@ export const Form = () => {
                             : history.push(`/categories/${data.data.id}/edit`)
                     ) : history.push('/categories')
                 })
-            })
-            .finally(() => setLoading(false))
+        } catch(error) {
+            console.log(error)
+            snackbar.enqueueSnackbar(
+                'Erro ao salvar categoria',
+                {variant: 'error'}
+            )
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (

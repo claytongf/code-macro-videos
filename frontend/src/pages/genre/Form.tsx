@@ -57,7 +57,7 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, categories_id: any}>({resolver,
+    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, categories_id: string[]}>({resolver,
         defaultValues: {
             categories_id: []
         }
@@ -186,7 +186,7 @@ export const Form = () => {
                 }}
                 disabled={loading}
                 error={errors.categories_id !== undefined}
-                helperText={errors.categories_id && errors.categories_id.message}
+                helperText={errors.categories_id && errors.categories_id[0]!.message}
                 InputLabelProps={{ shrink: true }}
             >
                 <MenuItem value="" disabled>
@@ -207,7 +207,13 @@ export const Form = () => {
             />
             Ativo?
             <Box dir={"rtl"}>
-                <Button {...buttonProps} onClick={() => onSubmit(getValues(), null)}>Salvar</Button>
+                <Button
+                    color={"primary"}
+                    {...buttonProps}
+                    onClick={() => onSubmit(getValues(), null)}
+                >
+                    Salvar
+                </Button>
                 <Button {...buttonProps} type="submit">Salvar e continuar editando</Button>
             </Box>
         </form>

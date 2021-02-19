@@ -38,7 +38,7 @@ type Props = {};
 const Table = (props: Props) => {
     const [data, setData] = React.useState([])
     React.useEffect(() => {
-        httpVideo.get('cast_members').then(
+        httpVideo.get('cast-members').then(
             response => setData(response.data.data)
         )
     }, [])

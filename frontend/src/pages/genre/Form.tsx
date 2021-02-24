@@ -1,7 +1,7 @@
 // @flow
 import { Box, Button, ButtonProps, Checkbox, makeStyles, MenuItem, TextField, Theme } from '@material-ui/core';
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { NestedValue, useForm } from 'react-hook-form';
 import categoryHttp from '../../util/http/category-http';
 import * as yup from '../../util/vendor/yup'
 import genreHttp from '../../util/http/genre-http';
@@ -52,12 +52,12 @@ export const Form = () => {
         () =>
           yup.object({
             name: yup.string().label('Nome').required().max(255),
-            category_id: yup.array().label('Categorias').required()
+            categories_id: yup.array().label('Categorias').required()
           }),
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, categories_id: string[]}>({resolver,
+    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, categories_id: NestedValue<string[]>}>({resolver,
         defaultValues: {
             categories_id: []
         }
@@ -186,7 +186,7 @@ export const Form = () => {
                 }}
                 disabled={loading}
                 error={errors.categories_id !== undefined}
-                helperText={errors.categories_id && errors.categories_id[0]!.message}
+                helperText={errors.categories_id && errors.categories_id.message}
                 InputLabelProps={{ shrink: true }}
             >
                 <MenuItem value="" disabled>

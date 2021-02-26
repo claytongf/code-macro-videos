@@ -9,6 +9,9 @@ const ptBR = {
     },
     number: {
         min: '${path} precisa ser no mínimo ${min}'
+    },
+    array: {
+        min: 'Em ${path}, precisa escolher pelo menos ${min} item'
     }
 }
 

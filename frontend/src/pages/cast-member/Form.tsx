@@ -1,18 +1,12 @@
-import { Box, Button, ButtonProps, FormControl, FormControlLabel, FormHelperText, FormLabel, makeStyles, Radio, RadioGroup, TextField, Theme } from '@material-ui/core';
+import { FormControl, FormControlLabel, FormHelperText, FormLabel, Radio, RadioGroup, TextField } from '@material-ui/core';
 import { useSnackbar } from 'notistack';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory, useParams } from 'react-router-dom';
+import SubmitActions from '../../components/SubmitActions';
 import castMemberHttp from '../../util/http/cast-member-http';
+import { CastMember } from '../../util/models';
 import * as yup from '../../util/vendor/yup'
-
-const useStyles = makeStyles((theme: Theme) => {
-    return {
-        submit: {
-            margin: theme.spacing(1)
-        }
-    }
-})
 
 const useYupValidationResolver = validationSchema =>
   React.useCallback(
@@ -57,36 +51,31 @@ export const Form = () => {
     const resolver = useYupValidationResolver(validationSchema);
     const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, type: string}>({resolver})
 
-    const classes = useStyles()
     const snackbar = useSnackbar();
     const history = useHistory()
     const {id} = useParams<{id:string}>()
-    const [castMember, setCastMember] = React.useState<{id: string} | null>(null)
+    const [castMember, setCastMember] = React.useState<CastMember | null>(null)
     const [loading, setLoading] = React.useState<boolean>(false)
-
-    const buttonProps: ButtonProps = {
-        className: classes.submit,
-        color: 'secondary',
-        variant: "contained",
-        disabled: loading
-    }
 
     React.useEffect(() => {
         register({name: "type"})
     }, [register])
 
     React.useEffect(() => {
+        let isSubscribed = true;
         if(!id){
             return
         }
-        async function getCastMember(){
+        (async function getCastMember(){
             setLoading(true)
             try{
                 const {data} = await castMemberHttp.get(id)
-                setCastMember(data.data)
-                reset(data.data)
+                if(isSubscribed){
+                    setCastMember(data.data)
+                    reset(data.data)
+                }
             } catch (error) {
-                console.log(error);
+                console.error(error);
                 snackbar.enqueueSnackbar(
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
@@ -94,8 +83,11 @@ export const Form = () => {
             } finally {
                 setLoading(false)
             }
+        })()
+
+        return () => {
+            isSubscribed = false
         }
-        getCastMember()
     }, [])
 
     async function onSubmit(formData, event){
@@ -160,10 +152,7 @@ export const Form = () => {
                     errors.type && <FormHelperText id="type-helper-text">{errors.type.message}</FormHelperText>
                 }
             </FormControl>
-            <Box dir={"rtl"}>
-                <Button {...buttonProps} onClick={() => onSubmit(getValues(), null)}>Salvar</Button>
-                <Button {...buttonProps} type="submit">Salvar e continuar editando</Button>
-            </Box>
+            <SubmitActions disabledButtons={loading} handleSave={() => onSubmit(getValues(), null)}/>
         </form>
     );
 };

@@ -1,18 +1,13 @@
-import { Box, Button, ButtonProps, Checkbox, FormControlLabel, makeStyles, TextField, Theme } from '@material-ui/core';
+import { Checkbox, FormControlLabel, TextField } from '@material-ui/core';
 import * as React from 'react';
 import categoryHttp from '../../util/http/category-http';
 import * as yup from '../../util/vendor/yup'
 import { useForm } from "react-hook-form"
 import { useHistory, useParams } from 'react-router';
 import { useSnackbar } from 'notistack';
-
-const useStyles = makeStyles((theme: Theme) => {
-    return {
-        submit: {
-            margin: theme.spacing(1)
-        }
-    }
-})
+import { Category } from '../../util/models';
+import SubmitActions from '../../components/SubmitActions';
+import { isValid } from 'date-fns';
 
 const useYupValidationResolver = validationSchema =>
   React.useCallback(
@@ -54,38 +49,33 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, is_active: boolean}>({resolver, defaultValues: {is_active: true}})
+    const {register, handleSubmit, getValues, setValue, triggerValidation, errors, reset, watch} = useForm<{name: string, is_active: boolean}>({resolver, defaultValues: {is_active: true}})
 
-    const classes = useStyles()
     const snackbar = useSnackbar();
     const history = useHistory()
     const {id} = useParams<{id:string}>()
-    const [category, setCategory] = React.useState<{id: string} | null>(null)
+    const [category, setCategory] = React.useState<Category | null>(null)
     const [loading, setLoading] = React.useState<boolean>(false)
-
-    const buttonProps: ButtonProps = {
-        className: classes.submit,
-        color: 'secondary',
-        variant: "contained",
-        disabled: loading
-    }
 
     React.useEffect(() => {
         register({name: "is_active"})
     }, [register])
 
     React.useEffect(() => {
+        let isSubscribed = true;
         if(!id){
             return
         }
-        async function getCategory(){
+        (async function getCategory(){
             setLoading(true)
             try{
                 const {data} = await categoryHttp.get(id)
-                setCategory(data.data)
-                reset(data.data)
+                if(isSubscribed){
+                    setCategory(data.data)
+                    reset(data.data)
+                }
             } catch (error) {
-                console.log(error);
+                console.error(error);
                 snackbar.enqueueSnackbar(
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
@@ -93,8 +83,11 @@ export const Form = () => {
             } finally {
                 setLoading(false)
             }
+        })()
+
+        return () => {
+            isSubscribed = false
         }
-        getCategory()
     }, [])
 
     async function onSubmit(formData, event){
@@ -168,16 +161,9 @@ export const Form = () => {
               label={'Ativo?'}
               labelPlacement={'end'}
             />
-            <Box dir={"rtl"}>
-                <Button
-                    color={"primary"}
-                    {...buttonProps}
-                    onClick={() => onSubmit(getValues(), null)}
-                >
-                    Salvar
-                </Button>
-                <Button {...buttonProps} type="submit">Salvar e continuar editando</Button>
-            </Box>
+            <SubmitActions disabledButtons={loading} handleSave={() => triggerValidation().then(isValid => {
+                 isValid && onSubmit(getValues(), null)
+            })}/>
         </form>
     );
 };

@@ -9,6 +9,7 @@ import { useHistory, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { Category, Genre } from '../../util/models';
 import SubmitActions from '../../components/SubmitActions';
+import { DefaultForm } from '../../components/DefaultForm';
 
 const useYupValidationResolver = validationSchema =>
   React.useCallback(
@@ -51,7 +52,7 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, categories_id: NestedValue<string[]>}>({resolver,
+    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch} = useForm<{name: string, categories_id: NestedValue<string[]>}>({resolver,
         defaultValues: {
             categories_id: []
         }
@@ -136,7 +137,7 @@ export const Form = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <DefaultForm onSubmit={handleSubmit(onSubmit)} GridItemProps={{ xs: 12, md: 6 }}>
             <TextField
                 name="name"
                 label="Nome"
@@ -196,7 +197,9 @@ export const Form = () => {
                 defaultChecked
             />
             Ativo?
-            <SubmitActions disabledButtons={loading} handleSave={() => onSubmit(getValues(), null)}/>
-        </form>
+            <SubmitActions disabledButtons={loading} handleSave={() => trigger().then(isValid => {
+                 isValid && onSubmit(getValues(), null)
+            })}/>
+        </DefaultForm>
     );
 };

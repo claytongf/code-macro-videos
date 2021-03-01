@@ -7,7 +7,7 @@ import { useHistory, useParams } from 'react-router';
 import { useSnackbar } from 'notistack';
 import { Category } from '../../util/models';
 import SubmitActions from '../../components/SubmitActions';
-import { isValid } from 'date-fns';
+import { DefaultForm } from '../../components/DefaultForm';
 
 const useYupValidationResolver = validationSchema =>
   React.useCallback(
@@ -49,7 +49,7 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, triggerValidation, errors, reset, watch} = useForm<{name: string, is_active: boolean}>({resolver, defaultValues: {is_active: true}})
+    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch} = useForm<{name: string, is_active: boolean}>({resolver, defaultValues: {is_active: true}})
 
     const snackbar = useSnackbar();
     const history = useHistory()
@@ -120,7 +120,7 @@ export const Form = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <DefaultForm onSubmit={handleSubmit(onSubmit)} GridItemProps={{ xs: 12, md: 6 }}>
             <TextField
                 name="name"
                 label="Nome"
@@ -146,24 +146,24 @@ export const Form = () => {
                 InputLabelProps={{ shrink:true }}
             />
             <FormControlLabel
-              disabled={loading}
-              control={
-                  <Checkbox
-                      name="is_active"
-                      color={"primary"}
-                      onChange={
-                          () => setValue('is_active', !getValues()['is_active'])
-                      }
-                      checked={watch('is_active')}
-                      disabled={loading}
-                  />
-              }
-              label={'Ativo?'}
-              labelPlacement={'end'}
+            disabled={loading}
+            control={
+                <Checkbox
+                    name="is_active"
+                    color={"primary"}
+                    onChange={
+                        () => setValue('is_active', !getValues()['is_active'])
+                    }
+                    checked={watch('is_active')}
+                    disabled={loading}
+                />
+            }
+            label={'Ativo?'}
+            labelPlacement={'end'}
             />
-            <SubmitActions disabledButtons={loading} handleSave={() => triggerValidation().then(isValid => {
-                 isValid && onSubmit(getValues(), null)
+            <SubmitActions disabledButtons={loading} handleSave={() => trigger().then(isValid => {
+                isValid && onSubmit(getValues(), null)
             })}/>
-        </form>
+        </DefaultForm>
     );
 };

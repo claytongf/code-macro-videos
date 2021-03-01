@@ -3,6 +3,7 @@ import { useSnackbar } from 'notistack';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory, useParams } from 'react-router-dom';
+import { DefaultForm } from '../../components/DefaultForm';
 import SubmitActions from '../../components/SubmitActions';
 import castMemberHttp from '../../util/http/cast-member-http';
 import { CastMember } from '../../util/models';
@@ -49,7 +50,7 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, errors, reset, watch} = useForm<{name: string, type: string}>({resolver})
+    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch} = useForm<{name: string, type: string}>({resolver})
 
     const snackbar = useSnackbar();
     const history = useHistory()
@@ -120,7 +121,7 @@ export const Form = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <DefaultForm onSubmit={handleSubmit(onSubmit)} GridItemProps={{ xs: 12, md: 6 }}>
             <TextField
                 name="name"
                 label="Nome"
@@ -152,7 +153,9 @@ export const Form = () => {
                     errors.type && <FormHelperText id="type-helper-text">{errors.type.message}</FormHelperText>
                 }
             </FormControl>
-            <SubmitActions disabledButtons={loading} handleSave={() => onSubmit(getValues(), null)}/>
-        </form>
+            <SubmitActions disabledButtons={loading} handleSave={() => trigger().then(isValid => {
+                 isValid && onSubmit(getValues(), null)
+            })}/>
+        </DefaultForm>
     );
 };

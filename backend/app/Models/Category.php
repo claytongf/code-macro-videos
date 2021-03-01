@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\ModelFilters\CategoryFilter;
 use App\Models\Traits\Uuid;
+use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    use HasFactory, SoftDeletes, Uuid;
+    use HasFactory, SoftDeletes, Uuid, Filterable;
 
     protected $fillable = ['name', 'description', 'is_active'];
     protected $dates = ['deleted_at'];
@@ -22,5 +24,10 @@ class Category extends Model
     public function genres()
     {
         return $this->belongsToMany(Genre::class)->withTrashed();
+    }
+
+    public function modelFilter()
+    {
+        return $this->provideFilter(CategoryFilter::class);
     }
 }

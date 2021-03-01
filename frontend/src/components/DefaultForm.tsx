@@ -1,4 +1,3 @@
-// @flow
 import { Grid, GridProps, makeStyles } from '@material-ui/core';
 import * as React from 'react';
 

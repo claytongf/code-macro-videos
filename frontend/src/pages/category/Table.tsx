@@ -10,6 +10,16 @@ import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit'
 
+interface Pagination{
+    page: number;
+    total: number;
+    per_page: number;
+}
+interface SearchState {
+    search: string;
+    pagination: Pagination;
+}
+
 const columnsDefinition: TableColumn[] = [
     {
         name: 'id',
@@ -67,37 +77,104 @@ const columnsDefinition: TableColumn[] = [
 
 const Table = () => {
     const snackbar = useSnackbar()
+    const subscribed = React.useRef(true)
     const [data, setData] = React.useState<Category[]>([])
     const [loading, setLoading] = React.useState<boolean>(false)
+    const [searchState, setSearchState] = React.useState<SearchState>({
+        search: '',
+        pagination: {
+            page: 1,
+            total: 0,
+            per_page: 10
+        }
+    });
+
     React.useEffect(() => {
-        let isSubscribed = true;
-        (async () => {
-            setLoading(true)
-            try{
-                const {data} = await categoryHttp.list<ListResponse<Category>>()
-                if(isSubscribed){
-                    setData(data.data)
-                }
 
-            } catch (error) {
-                console.error(error);
-                snackbar.enqueueSnackbar(
-                    'Não foi possível carregar as informações',
-                    {variant: 'error'}
-                )
-            } finally {
-                setLoading(false)
-            }
-        })()
+    }, [])
 
+    React.useEffect(() => {
+        subscribed.current = true
+        getData()
         return () => {
-            isSubscribed = false
+            subscribed.current = false
             //executado quando componente estiver desmontado
         }
-    }, [])
+    }, [
+        searchState.search,
+        searchState.pagination.page,
+        searchState.pagination.per_page
+    ])
+
+    async function getData(){
+        setLoading(true)
+        try{
+            const {data} = await categoryHttp.list<ListResponse<Category>>({
+                queryParams: {
+                    search: searchState.search,
+                    page: searchState.pagination.page,
+                    per_page: searchState.pagination.per_page
+                }
+            })
+            if(subscribed.current){
+                setData(data.data)
+                setSearchState((prevState => ({
+                    ...prevState,
+                    pagination: {
+                        ...prevState.pagination,
+                        total: data.meta.total
+                    }
+                })))
+            }
+
+        } catch (error) {
+            console.error(error);
+            snackbar.enqueueSnackbar(
+                'Não foi possível carregar as informações',
+                {variant: 'error'}
+            )
+        } finally {
+            setLoading(false)
+        }
+    }
     return (
         <MuiThemeProvider theme={makeActionStyles(columnsDefinition.length - 1)}>
-            <DefaultTable title="Listagem de categorias" columns={columnsDefinition} data={data} loading={loading} options={{responsive: 'vertical'}}/>
+            <DefaultTable
+                title="Listagem de categorias"
+                columns={columnsDefinition}
+                data={data}
+                loading={loading}
+                options={{
+                    serverSide: true,
+                    responsive: 'vertical',
+                    searchText: searchState.search,
+                    page: searchState.pagination.page,
+                    rowsPerPage: searchState.pagination.per_page,
+                    count: searchState.pagination.total,
+                    onSearchChange: (value) => setSearchState((prevState => ({
+                        ...prevState,
+                        search: value,
+                        }
+                    ))),
+                    onChangePage: (page) => setSearchState((prevState => ({
+                        ...prevState,
+                            pagination: {
+                                ...prevState.pagination,
+                                page: page + 1,
+                            }
+                        }
+                    ))),
+                    onChangeRowsPerPage: (perPage) => setSearchState((prevState => ({
+                        ...prevState,
+                        pagination: {
+                            ...prevState.pagination,
+                            per_page: perPage,
+                        }
+                        }
+                    ))),
+
+                }}
+            />
         </MuiThemeProvider>
     );
 };

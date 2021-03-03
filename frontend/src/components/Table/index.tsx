@@ -77,7 +77,7 @@ const Table: React.FC<TableProps> = (props) => {
     }
 
     function getOriginalMuiDataTableProps(){
-        omit(newProps, 'loading')
+        return omit(newProps, 'loading')
     }
 
     const theme = cloneDeep<Theme>(useTheme())
@@ -95,7 +95,7 @@ const Table: React.FC<TableProps> = (props) => {
 
     return (
         <MuiThemeProvider theme={theme}>
-            <MuiDataTable {...newProps}/>
+            <MuiDataTable {...originalProps}/>
         </MuiThemeProvider>
     );
 };
@@ -106,11 +106,10 @@ export function makeActionStyles(column){
     return theme => {
         const copyTheme = cloneDeep(theme)
         const selector = `&[data-testid^="MuiDataTableBodyCell-${column}"]`;
-        (copyTheme.overrides as any).MuiDataTableBodyCell.root[selector] = {
+        (copyTheme.overrides as any).MUIDataTableBodyCell.root[selector] = {
             paddingTop: '0px',
             passingBottom: '0px'
         }
         return copyTheme
     }
-
 }

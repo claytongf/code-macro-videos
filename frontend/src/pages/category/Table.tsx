@@ -9,16 +9,9 @@ import { useSnackbar } from 'notistack';
 import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit'
-
-interface Pagination{
-    page: number;
-    total: number;
-    per_page: number;
-}
-interface SearchState {
-    search: string;
-    pagination: Pagination;
-}
+import { FilterResetButton } from '../../components/Table/FilterResetButton';
+import { Creators } from '../../store/filter';
+import useFilter from '../../hooks/useFilter';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -75,35 +68,34 @@ const columnsDefinition: TableColumn[] = [
     }
 ]
 
+const debounceTime = 300
+const debounceSearchTime = 300
+
 const Table = () => {
     const snackbar = useSnackbar()
     const subscribed = React.useRef(true)
     const [data, setData] = React.useState<Category[]>([])
     const [loading, setLoading] = React.useState<boolean>(false)
-    const [searchState, setSearchState] = React.useState<SearchState>({
-        search: '',
-        pagination: {
-            page: 1,
-            total: 0,
-            per_page: 10
-        }
-    });
-
-    React.useEffect(() => {
-
-    }, [])
+    const {columns, filterManager, filterState, debouncedFilterState, dispatch, totalRecords, setTotalRecords} = useFilter({
+        columns: columnsDefinition,
+        debounceTime: debounceTime,
+        rowsPerPage: 10,
+        rowsPerPageOptions: [10, 25, 50]
+    })
 
     React.useEffect(() => {
         subscribed.current = true
+        filterManager.pushHistory()
         getData()
         return () => {
             subscribed.current = false
             //executado quando componente estiver desmontado
         }
     }, [
-        searchState.search,
-        searchState.pagination.page,
-        searchState.pagination.per_page
+        filterManager.cleanSearchText(debouncedFilterState.search),
+        debouncedFilterState.pagination.page,
+        debouncedFilterState.pagination.per_page,
+        debouncedFilterState.order
     ])
 
     async function getData(){
@@ -111,24 +103,22 @@ const Table = () => {
         try{
             const {data} = await categoryHttp.list<ListResponse<Category>>({
                 queryParams: {
-                    search: searchState.search,
-                    page: searchState.pagination.page,
-                    per_page: searchState.pagination.per_page
+                    search: filterManager.cleanSearchText(filterState.search),
+                    page: filterState.pagination.page,
+                    per_page: filterState.pagination.per_page,
+                    sort: filterState.order.sort,
+                    dir: filterState.order.dir
                 }
             })
             if(subscribed.current){
                 setData(data.data)
-                setSearchState((prevState => ({
-                    ...prevState,
-                    pagination: {
-                        ...prevState.pagination,
-                        total: data.meta.total
-                    }
-                })))
+                setTotalRecords(data.meta.total)
             }
-
-        } catch (error) {
+        } catch(error){
             console.error(error);
+            if(categoryHttp.isCancelledRequest(error)){
+                return;
+            }
             snackbar.enqueueSnackbar(
                 'Não foi possível carregar as informações',
                 {variant: 'error'}
@@ -137,42 +127,29 @@ const Table = () => {
             setLoading(false)
         }
     }
+
     return (
         <MuiThemeProvider theme={makeActionStyles(columnsDefinition.length - 1)}>
             <DefaultTable
                 title="Listagem de categorias"
-                columns={columnsDefinition}
+                columns={columns}
                 data={data}
                 loading={loading}
+                debouncedSearchTime={debounceSearchTime}
                 options={{
                     serverSide: true,
                     responsive: 'vertical',
-                    searchText: searchState.search,
-                    page: searchState.pagination.page,
-                    rowsPerPage: searchState.pagination.per_page,
-                    count: searchState.pagination.total,
-                    onSearchChange: (value) => setSearchState((prevState => ({
-                        ...prevState,
-                        search: value,
-                        }
-                    ))),
-                    onChangePage: (page) => setSearchState((prevState => ({
-                        ...prevState,
-                            pagination: {
-                                ...prevState.pagination,
-                                page: page + 1,
-                            }
-                        }
-                    ))),
-                    onChangeRowsPerPage: (perPage) => setSearchState((prevState => ({
-                        ...prevState,
-                        pagination: {
-                            ...prevState.pagination,
-                            per_page: perPage,
-                        }
-                        }
-                    ))),
-
+                    searchText: filterState.search as any,
+                    page: filterState.pagination.page,
+                    rowsPerPage: filterState.pagination.per_page,
+                    count: totalRecords,
+                    customToolbar: () => (
+                        <FilterResetButton handleClick={() => dispatch(Creators.setReset())}/> //default
+                    ),
+                    onSearchChange: (value) => filterManager.changeSearch(value),
+                    onChangePage: (page) => filterManager.changePage(page),
+                    onChangeRowsPerPage: (perPage) => filterManager.changeRowsPerPage(perPage),
+                    onColumnSortChange: (changedColumn: string, direction: string) => filterManager.changeColumnSort(changedColumn, direction),
                 }}
             />
         </MuiThemeProvider>

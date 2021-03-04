@@ -1,10 +1,12 @@
 import { MUIDataTableColumn } from "mui-datatables";
-import { Dispatch, Reducer, useReducer, useState } from "react";
+import { Dispatch, Reducer, useEffect, useReducer, useState } from "react";
+import * as yup from '../util/vendor/yup'
 import reducer, { Creators, INITIAL_STATE } from "../store/filter";
 import { Actions as FilterActions, State as FilterState} from "../store/filter/types";
 import { useDebounce } from 'use-debounce'
 import { useHistory } from "react-router";
 import { History } from 'history'
+import { isEqual } from 'lodash'
 
 interface FilterManagerOptions {
     columns: MUIDataTableColumn[];
@@ -22,8 +24,9 @@ interface UseFilterOptions extends Omit<FilterManagerOptions, 'history'>{
 }
 
 export default function useFilter(options: UseFilterOptions){
-    const history = useHistory
+    const history = useHistory()
     const filterManager = new FilterManager({...options, history})
+    const INITIAL_STATE = filterManager.getStateFromURL()
     const [filterState, dispatch] = useReducer<Reducer<FilterState, FilterActions>>(reducer, INITIAL_STATE);
     const [debouncedFilterState] = useDebounce(filterState, options.debounceTime)
     const [totalRecords, setTotalRecords] = useState<number>(0)
@@ -31,6 +34,10 @@ export default function useFilter(options: UseFilterOptions){
     filterManager.state = filterState
     filterManager.dispatch = dispatch
     filterManager.applyOrderInColumns();
+
+    useEffect(() => {
+        filterManager.replaceHistory()
+    }, [])
 
     return {
         columns: filterManager.columns,
@@ -44,6 +51,7 @@ export default function useFilter(options: UseFilterOptions){
 }
 
 export class FilterManager{
+    schema
     state: FilterState = null as any;
     dispatch: Dispatch<FilterActions> = null as any;
     columns: MUIDataTableColumn[];
@@ -57,6 +65,7 @@ export class FilterManager{
         this.rowsPerPage = rowsPerPage
         this.rowsPerPageOptions = rowsPerPageOptions
         this.history = history;
+        this.createValidationSchema()
     }
 
     changeSearch(value) {
@@ -99,6 +108,14 @@ export class FilterManager{
         return newText
     }
 
+    replaceHistory(){
+        this.history.replace({
+            pathname: this.history.location.pathname,
+            search: "?" + new URLSearchParams(this.formatSearchParams() as any),
+            state: this.state
+        })
+    }
+
     pushHistory(){
         const newLocation = {
             pathname: this.history.location.pathname,
@@ -107,6 +124,11 @@ export class FilterManager{
                 ...this.state,
                 search: this.cleanSearchText(this.state.search)
             }
+        }
+        const oldState = this.history.location.state
+        const nextState = this.state
+        if(isEqual(oldState, nextState)){
+            return
         }
         this.history.push(newLocation)
     }
@@ -124,5 +146,52 @@ export class FilterManager{
                 }
             )
         }
+    }
+
+    getStateFromURL(){
+        const queryParams = new URLSearchParams(this.history.location.search.substr(1))
+        return this.schema.cast({
+            search: queryParams.get('search'),
+            pagination: {
+                page: queryParams.get('page'),
+                per_page: queryParams.get('per_page')
+            },
+            order: {
+                sort: queryParams.get('sort'),
+                dir: queryParams.get('dir')
+            }
+        })
+    }
+
+    private createValidationSchema(){
+        this.schema = yup.object().shape({
+            search: yup.string()
+                .transform(value => !value ? undefined : value)
+                .default(''),
+            pagination: yup.object().shape({
+                page: yup.number()
+                    .transform(value => isNaN(value) || parseInt(value) < 1 ? undefined : value)
+                    .default(1),
+                per_page: yup.number()
+                    .oneOf(this.rowsPerPageOptions)
+                    .transform(value => isNaN(value) ? undefined : value)
+                    .default(this.rowsPerPage),
+            }),
+            order: yup.object().shape({
+                sort: yup.string()
+                    .nullable()
+                    .transform(value => {
+                        const columnsName = this.columns
+                            .filter(column => !column.options || column.options.sort !== false)
+                            .map(column => column.name)
+                        return columnsName.includes(value) ? value : undefined
+                    })
+                    .default(null),
+                dir: yup.string()
+                    .nullable()
+                    .transform(value => !value || !['asc', 'desc'].includes(value.toLowerCase()) ? undefined : value)
+                    .default(null),
+            }),
+        })
     }
 }

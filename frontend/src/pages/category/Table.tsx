@@ -4,13 +4,12 @@ import parseISO from 'date-fns/parseISO'
 import categoryHttp from '../../util/http/category-http';
 import { BadgeNo, BadgeYes } from '../../components/Badge';
 import { Category, ListResponse } from '../../util/models';
-import DefaultTable, {makeActionStyles ,TableColumn} from '../../components/Table'
+import DefaultTable, {makeActionStyles ,TableColumn, MuiDataTableRefComponent} from '../../components/Table'
 import { useSnackbar } from 'notistack';
 import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit'
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
-import { Creators } from '../../store/filter';
 import useFilter from '../../hooks/useFilter';
 
 const columnsDefinition: TableColumn[] = [
@@ -78,11 +77,14 @@ const Table = () => {
     const subscribed = React.useRef(true)
     const [data, setData] = React.useState<Category[]>([])
     const [loading, setLoading] = React.useState<boolean>(false)
-    const {columns, filterManager, filterState, debouncedFilterState, dispatch, totalRecords, setTotalRecords} = useFilter({
+    const tableRef = React.useRef() as React.MutableRefObject<MuiDataTableRefComponent>
+
+    const {columns, filterManager, filterState, debouncedFilterState, totalRecords, setTotalRecords} = useFilter({
         columns: columnsDefinition,
         debounceTime: debounceTime,
         rowsPerPage,
-        rowsPerPageOptions
+        rowsPerPageOptions,
+        tableRef
     })
 
     React.useEffect(() => {
@@ -138,6 +140,7 @@ const Table = () => {
                 data={data}
                 loading={loading}
                 debouncedSearchTime={debounceSearchTime}
+                ref={tableRef}
                 options={{
                     serverSide: true,
                     responsive: 'vertical',
@@ -147,7 +150,7 @@ const Table = () => {
                     rowsPerPageOptions,
                     count: totalRecords,
                     customToolbar: () => (
-                        <FilterResetButton handleClick={() => dispatch(Creators.setReset())}/> //default
+                        <FilterResetButton handleClick={() => filterManager.resetFilter()}/> //default
                     ),
                     onSearchChange: (value) => filterManager.changeSearch(value),
                     onChangePage: (page) => filterManager.changePage(page),

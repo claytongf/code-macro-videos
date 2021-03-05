@@ -107,6 +107,11 @@ const theme = createMuiTheme({
             root: {
                 color: (palette!.secondary as SimplePaletteColorOptions).main
             }
+        },
+        MuiChip: {
+            root: {
+                marginBottom: '16px !important'
+            }
         }
     }
 })

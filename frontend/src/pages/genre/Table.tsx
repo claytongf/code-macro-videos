@@ -150,11 +150,11 @@ const Table = () => {
     }
 
     React.useEffect(() => {
-
+        let isSubscribed = true;
         (async () => {
             try {
                 const {data} = await categoryHttp.list({queryParams: {all: ''}})
-                if(subscribed.current){
+                if (isSubscribed) {
                     setCategories(data.data);
                     (columnCategories.options as any).filterOptions.names = data.data.map(category => category.name)
                 }
@@ -166,7 +166,7 @@ const Table = () => {
                 )
             }
             return () => {
-                subscribed.current = false
+                 isSubscribed = false;
                 //executado quando componente estiver desmontado
             }
         })();

@@ -154,7 +154,7 @@ const Table = () => {
                     serverSide: true,
                     responsive: 'scrollFullHeight',
                     searchText: filterState.search as any,
-                    page: filterState.pagination.page,
+                    page: filterState.pagination.page - 1,
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,

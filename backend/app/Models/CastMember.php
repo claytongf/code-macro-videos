@@ -23,7 +23,7 @@ class CastMember extends Model
         'type' => 'integer'
     ];
     public $incrementing = false;
-    public $types = [
+    public static $types = [
         CastMember::TYPE_DIRECTOR,
         CastMember::TYPE_ACTOR,
     ];

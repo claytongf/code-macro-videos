@@ -198,13 +198,13 @@ const Table = () => {
                 options={{
                     serverSideFilterList,
                     serverSide: true,
-                    responsive: 'scrollFullHeight',
+                    responsive: 'scrollMaxHeight',
                     searchText: filterState.search as any,
                     page: filterState.pagination.page - 1,
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
-                    onFilterChange: (column:any, filterList) => {
+                    onFilterChange: (column, filterList) => {
                         const columnIndex = columns.findIndex(c => c.name === column)
                         filterManager.changeExtraFilter({
                             [column]: filterList[columnIndex].length ? filterList[columnIndex][0] : null

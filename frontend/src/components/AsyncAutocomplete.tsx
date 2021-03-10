@@ -2,17 +2,20 @@ import { CircularProgress, TextField, TextFieldProps } from '@material-ui/core';
 import { Autocomplete, AutocompleteProps } from '@material-ui/lab';
 import { useSnackbar } from 'notistack';
 import * as React from 'react';
+import { useDebounce } from 'use-debounce/lib';
 
 interface AsyncAutocompleteProps {
     fetchOptions: (searchText) => Promise<any>
+    debounceTime?: number;
     TextFieldProps?: TextFieldProps
     AutocompleteProps?: Omit<AutocompleteProps<any, any, any, any>, 'renderInput' | 'options'>
 }
 const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
-    const {AutocompleteProps} = props;
+    const {AutocompleteProps, debounceTime = 300} = props;
     const {freeSolo = false, onOpen, onClose, onInputChange} = AutocompleteProps as any;
     const [open, setOpen] = React.useState(false)
     const [searchText, setSearchText] = React.useState("")
+    const [debouncedSearchText] = useDebounce(searchText, debounceTime)
     const [loading, setLoading] = React.useState(false)
     const [options, setOptions] = React.useState([])
 
@@ -71,7 +74,7 @@ const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
     }, [open])
 
     React.useEffect(() => {
-        if(!open || searchText === "" && freeSolo){
+        if(!open || debouncedSearchText === "" && freeSolo){
             return;
         }
 
@@ -79,7 +82,7 @@ const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
         (async() => {
           setLoading(true);
           try {
-            const data = await props.fetchOptions(searchText);
+            const data = await props.fetchOptions(debouncedSearchText);
             if (isSubscribed) {
               setOptions(data);
             }
@@ -90,7 +93,7 @@ const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
         return () => {
           isSubscribed = false;
         };
-    }, [freeSolo ? searchText : open]);
+    }, [freeSolo ? debouncedSearchText : open]);
 
     return (
         <Autocomplete {...autocompleteProps}/>

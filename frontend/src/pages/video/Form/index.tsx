@@ -225,6 +225,8 @@ export const Form = () => {
                             <GenreField
                                 genres={watch('genres')}
                                 setGenres={(value) => setValue('genres', value, { shouldValidate: true })}
+                                categories={watch('categories')}
+                                setCategories={(value) => setValue('categories', value, { shouldValidate: true })}
                                 error={errors.genres}
                                 disabled={loading}
                             />
@@ -232,7 +234,7 @@ export const Form = () => {
                         <Grid item md={6} xs={12}>
                             <CategoryField
                                 categories={watch('categories')}
-                                setGenres={(value) => setValue('categories', value, { shouldValidate: true })}
+                                setCategories={(value) => setValue('categories', value, { shouldValidate: true })}
                                 genres={watch('genres')}
                                 error={errors.categories}
                                 disabled={loading}

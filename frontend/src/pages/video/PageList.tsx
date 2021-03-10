@@ -1,14 +1,13 @@
-import { Box, Fab } from '@material-ui/core';
-import { Link } from 'react-router-dom';
+import { Box, Fab, Table } from '@material-ui/core';
 import { Page } from '../../components/Page';
 import AddIcon from '@material-ui/icons/Add'
-import Table from './Table';
+import { Link } from 'react-router-dom';
 
 const PageList = () => {
     return (
-        <Page title={'Listagem gêneros'}>
+        <Page title={'Listagem vídeos'}>
             <Box dir={'rtl'} paddingBottom={2}>
-                <Fab title="Adicionar gênero" color={'secondary'} size="small" component={Link} to="/genres/create">
+                <Fab title="Adicionar vídeo" color={'secondary'} size="small" component={Link} to="/videos/create">
                     <AddIcon/>
                 </Fab>
             </Box>

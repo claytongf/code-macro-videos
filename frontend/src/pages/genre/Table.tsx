@@ -1,4 +1,4 @@
-import { Chip, IconButton, MuiThemeProvider } from '@material-ui/core';
+import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import * as React from 'react';
 import format from 'date-fns/format'
 import parseISO from 'date-fns/parseISO'
@@ -13,6 +13,8 @@ import useFilter from '../../hooks/useFilter';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
 import categoryHttp from '../../util/http/category-http';
 import { BadgeNo, BadgeYes } from '../../components/Badge';
+import DeleteDialog from '../../components/DeleteDialog';
+import useDeleteCollection from '../../hooks/useDeleteCollection';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -104,6 +106,7 @@ const Table = () => {
     const [loading, setLoading] = React.useState<boolean>(false)
     const [categories, setCategories] = React.useState<Category[]>()
     const tableRef = React.useRef() as React.MutableRefObject<MuiDataTableRefComponent>
+    const {openDeleteDialog, setOpenDeleteDialog, rowsToDelete, setRowsToDelete } = useDeleteCollection();
 
     const {columns, filterManager, filterState, debouncedFilterState, totalRecords, setTotalRecords} = useFilter({
         columns: columnsDefinition,
@@ -192,7 +195,6 @@ const Table = () => {
     async function getData(){
         setLoading(true)
         try{
-            console.log(debouncedFilterState.extraFilter && debouncedFilterState.extraFilter.is_active);
             const {data} = await genreHttp.list<ListResponse<Genre>>({
                 queryParams: {
                     search: filterManager.cleanSearchText(filterState.search),
@@ -215,6 +217,9 @@ const Table = () => {
             if(subscribed.current){
                 setData(data.data)
                 setTotalRecords(data.meta.total)
+                if(openDeleteDialog){
+                    setOpenDeleteDialog(false)
+                }
             }
         } catch (error) {
             console.error(error);
@@ -229,8 +234,40 @@ const Table = () => {
             setLoading(false)
         }
     }
+
+    function deleteRows(confirmed: boolean){
+        if(!confirmed){
+            setOpenDeleteDialog(false);
+            return;
+        }
+        const ids = rowsToDelete
+            .data
+            .map(value => data[value.index].id)
+            .join(',');
+        genreHttp
+            .deleteCollection({ids})
+            .then(response => {
+                snackbar.enqueueSnackbar(
+                    'Registros excluídos com sucesso', {variant: 'success'}
+                )
+                if(rowsToDelete.data.length === filterState.pagination.per_page && filterState.pagination.page > 1){
+                    const page = filterState.pagination.page - 2;
+                    filterManager.changePage(page)
+                }else{
+                    getData()
+                }
+            })
+            .catch((error) => {
+                console.error(error)
+                snackbar.enqueueSnackbar(
+                    'Não foi possível excluir os registros', {variant: 'error'}
+                )
+            })
+    }
+
     return (
         <MuiThemeProvider theme={makeActionStyles(columnsDefinition.length - 1)}>
+            <DeleteDialog open={openDeleteDialog} handleClose={deleteRows}/>
             <DefaultTable
                 title="Listagem de gêneros"
                 columns={columns}
@@ -260,6 +297,10 @@ const Table = () => {
                     onChangePage: (page) => filterManager.changePage(page),
                     onChangeRowsPerPage: (perPage) => filterManager.changeRowsPerPage(perPage),
                     onColumnSortChange: (changedColumn: string, direction: string) => filterManager.changeColumnSort(changedColumn, direction),
+                    onRowsDelete: (rowsDeleted) => {
+                        setRowsToDelete(rowsDeleted as any);
+                        return false;
+                    }
                 }}
             />
         </MuiThemeProvider>

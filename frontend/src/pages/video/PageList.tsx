@@ -1,7 +1,8 @@
-import { Box, Fab, Table } from '@material-ui/core';
+import { Box, Fab } from '@material-ui/core';
 import { Page } from '../../components/Page';
 import AddIcon from '@material-ui/icons/Add'
 import { Link } from 'react-router-dom';
+import Table from './Table';
 
 const PageList = () => {
     return (

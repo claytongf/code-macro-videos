@@ -15,6 +15,7 @@ import CastMemberField, { CastMemberFieldComponent } from './CastMemberField';
 import { omit, zipObject } from 'lodash';
 import { InputFileComponent } from '../../../components/InputFile';
 import { DefaultForm } from '../../../components/DefaultForm';
+import useSnackbarFormError from '../../../hooks/useSnackbarFormError';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -65,7 +66,6 @@ const useYupValidationResolver = validationSchema =>
 const fileFields = Object.keys(VideoFileFieldsMap);
 
 export const Form = () => {
-    const classes = useStyles()
     const validationSchema = yup.object().shape({
         title: yup.string()
             .label('Título')
@@ -107,7 +107,7 @@ export const Form = () => {
 
     const resolver = useYupValidationResolver(validationSchema);
 
-    const { register, handleSubmit, getValues, setValue, errors, reset, watch, trigger } = useForm<Video>({
+    const { register, handleSubmit, getValues, setValue, errors, reset, watch, trigger, formState } = useForm<Video>({
         resolver,
         defaultValues: {
             rating: undefined,
@@ -118,6 +118,9 @@ export const Form = () => {
         }
     })
 
+    useSnackbarFormError(formState.submitCount, errors)
+
+    const classes = useStyles()
     const snackbar = useSnackbar();
     const history = useHistory()
     const {id} = useParams<{id:string}>()

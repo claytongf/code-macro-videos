@@ -10,6 +10,7 @@ import { useSnackbar } from 'notistack';
 import { Category, Genre } from '../../util/models';
 import SubmitActions from '../../components/SubmitActions';
 import { DefaultForm } from '../../components/DefaultForm';
+import useSnackbarFormError from '../../hooks/useSnackbarFormError';
 
 const useYupValidationResolver = validationSchema =>
   React.useCallback(
@@ -52,11 +53,13 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch} = useForm<{name: string, categories_id: NestedValue<string[]>}>({resolver,
+    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch, formState} = useForm<{name: string, categories_id: NestedValue<string[]>}>({resolver,
         defaultValues: {
             categories_id: []
         }
     })
+
+    useSnackbarFormError(formState.submitCount, errors)
 
     const snackbar = useSnackbar();
     const history = useHistory()

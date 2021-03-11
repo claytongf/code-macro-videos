@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useHistory, useParams } from 'react-router-dom';
 import { DefaultForm } from '../../components/DefaultForm';
 import SubmitActions from '../../components/SubmitActions';
+import useSnackbarFormError from '../../hooks/useSnackbarFormError';
 import castMemberHttp from '../../util/http/cast-member-http';
 import { CastMember } from '../../util/models';
 import * as yup from '../../util/vendor/yup'
@@ -50,8 +51,9 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch} = useForm<{name: string, type: string}>({resolver})
+    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch, formState} = useForm<{name: string, type: string}>({resolver})
 
+    useSnackbarFormError(formState.submitCount, errors)
     const snackbar = useSnackbar();
     const history = useHistory()
     const {id} = useParams<{id:string}>()

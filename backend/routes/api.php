@@ -24,6 +24,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 $exceptCreateAndEdit = ['create', 'edit'];
 Route::resource('categories', CategoryController::class)->except($exceptCreateAndEdit);
+Route::delete('categories', [CategoryController::class, 'destroyCollection']);
 Route::resource('genres', GenreController::class)->except($exceptCreateAndEdit);
+Route::delete('genres', [GenreController::class, 'destroyCollection']);
 Route::resource('cast-members', CastMemberController::class)->except($exceptCreateAndEdit);
+Route::delete('cast-members', [CastMemberController::class, 'destroyCollection']);
 Route::resource('videos', VideoController::class)->except($exceptCreateAndEdit);
+Route::delete('videos', [VideoController::class, 'destroyCollection']);

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory, useParams } from 'react-router-dom';
 import { DefaultForm } from '../../components/DefaultForm';
+import LoadingContext from '../../components/loading/LoadingContext';
 import SubmitActions from '../../components/SubmitActions';
 import useSnackbarFormError from '../../hooks/useSnackbarFormError';
 import castMemberHttp from '../../util/http/cast-member-http';
@@ -58,7 +59,7 @@ export const Form = () => {
     const history = useHistory()
     const {id} = useParams<{id:string}>()
     const [castMember, setCastMember] = React.useState<CastMember | null>(null)
-    const [loading, setLoading] = React.useState<boolean>(false)
+    const loading = React.useContext(LoadingContext)
 
     React.useEffect(() => {
         register({name: "type"})
@@ -70,7 +71,6 @@ export const Form = () => {
             return
         }
         (async function getCastMember(){
-            setLoading(true)
             try{
                 const {data} = await castMemberHttp.get(id)
                 if(isSubscribed){
@@ -83,8 +83,6 @@ export const Form = () => {
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
                 )
-            } finally {
-                setLoading(false)
             }
         })()
 
@@ -94,7 +92,6 @@ export const Form = () => {
     }, [])
 
     async function onSubmit(formData, event){
-        setLoading(true)
         try {
             const http = !castMember
                 ? castMemberHttp.create(formData)
@@ -117,8 +114,6 @@ export const Form = () => {
                 'Erro ao salvar Membro de Elenco',
                 {variant: 'error'}
             )
-        } finally {
-            setLoading(false)
         }
     }
 

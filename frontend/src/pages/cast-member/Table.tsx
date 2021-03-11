@@ -14,6 +14,7 @@ import { FilterResetButton } from '../../components/Table/FilterResetButton';
 import { invert } from 'lodash';
 import DeleteDialog from '../../components/DeleteDialog';
 import useDeleteCollection from '../../hooks/useDeleteCollection';
+import LoadingContext from '../../components/loading/LoadingContext';
 
 const castMemberNames = Object.values(CastMemberTypeMap)
 
@@ -90,7 +91,7 @@ const Table = () => {
     const snackbar = useSnackbar()
     const subscribed = React.useRef(true)
     const [data, setData] = React.useState<CastMember[]>([])
-    const [loading, setLoading] = React.useState<boolean>(false)
+    const loading = React.useContext(LoadingContext)
     const {openDeleteDialog, setOpenDeleteDialog, rowsToDelete, setRowsToDelete } = useDeleteCollection();
     const tableRef = React.useRef() as React.MutableRefObject<MuiDataTableRefComponent>
 
@@ -156,7 +157,6 @@ const Table = () => {
     ])
 
     async function getData(){
-        setLoading(true)
         try{
             const {data} = await castMemberHttp.list<ListResponse<CastMember>>({
                 queryParams: {
@@ -188,8 +188,6 @@ const Table = () => {
                 'Não foi possível carregar as informações',
                 {variant: 'error'}
             )
-        } finally {
-            setLoading(false)
         }
     }
 

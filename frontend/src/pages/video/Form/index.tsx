@@ -16,6 +16,7 @@ import { omit, zipObject } from 'lodash';
 import { InputFileComponent } from '../../../components/InputFile';
 import { DefaultForm } from '../../../components/DefaultForm';
 import useSnackbarFormError from '../../../hooks/useSnackbarFormError';
+import LoadingContext from '../../../components/loading/LoadingContext';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -125,7 +126,7 @@ export const Form = () => {
     const history = useHistory()
     const {id} = useParams<{id:string}>()
     const [video, setVideo] = React.useState<Video | null>(null)
-    const [loading, setLoading] = React.useState<boolean>(false)
+    const loading = React.useContext(LoadingContext)
     const theme = useTheme();
     const isGreaterMd = useMediaQuery(theme.breakpoints.up('md'));
     const castMemberRef = React.useRef() as React.MutableRefObject<CastMemberFieldComponent>
@@ -145,7 +146,6 @@ export const Form = () => {
         }
         let isSubscribed = true;
         (async () => {
-            setLoading(true)
             try{
                 const {data} = await videoHttp.get(id)
                 if(isSubscribed){
@@ -158,8 +158,6 @@ export const Form = () => {
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
                 )
-            } finally {
-                setLoading(false)
             }
         })()
 
@@ -174,7 +172,6 @@ export const Form = () => {
         sendData["categories_id"] = formData["categories"].map((category) => category.id);
         sendData["genres_id"] = formData["genres"].map((genre) => genre.id);
 
-        setLoading(true)
         try {
             const http = !video
                 ? videoHttp.create(sendData)

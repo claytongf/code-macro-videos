@@ -1,4 +1,3 @@
-// @flow
 import { FormControl, FormControlProps, FormHelperText, makeStyles, Theme, Typography } from '@material-ui/core';
 import { grey } from '@material-ui/core/colors';
 import * as React from 'react';

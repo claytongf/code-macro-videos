@@ -15,6 +15,7 @@ import categoryHttp from '../../util/http/category-http';
 import { BadgeNo, BadgeYes } from '../../components/Badge';
 import DeleteDialog from '../../components/DeleteDialog';
 import useDeleteCollection from '../../hooks/useDeleteCollection';
+import LoadingContext from '../../components/loading/LoadingContext';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -103,7 +104,7 @@ const Table = () => {
     const snackbar = useSnackbar()
     const subscribed = React.useRef(true)
     const [data, setData] = React.useState<Genre[]>([])
-    const [loading, setLoading] = React.useState<boolean>(false)
+    const loading = React.useContext(LoadingContext)
     const [categories, setCategories] = React.useState<Category[]>()
     const tableRef = React.useRef() as React.MutableRefObject<MuiDataTableRefComponent>
     const {openDeleteDialog, setOpenDeleteDialog, rowsToDelete, setRowsToDelete } = useDeleteCollection();
@@ -193,7 +194,6 @@ const Table = () => {
     ])
 
     async function getData(){
-        setLoading(true)
         try{
             const {data} = await genreHttp.list<ListResponse<Genre>>({
                 queryParams: {
@@ -230,8 +230,6 @@ const Table = () => {
                 'Não foi possível carregar as informações',
                 {variant: 'error'}
             )
-        } finally {
-            setLoading(false)
         }
     }
 

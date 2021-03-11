@@ -11,6 +11,7 @@ import { Category, Genre } from '../../util/models';
 import SubmitActions from '../../components/SubmitActions';
 import { DefaultForm } from '../../components/DefaultForm';
 import useSnackbarFormError from '../../hooks/useSnackbarFormError';
+import LoadingContext from '../../components/loading/LoadingContext';
 
 const useYupValidationResolver = validationSchema =>
   React.useCallback(
@@ -66,7 +67,7 @@ export const Form = () => {
     const {id} = useParams<{id:string}>()
     const [genre, setGenre] = React.useState<Genre | null>(null)
     const [categories, setCategories] = React.useState<Category[]>([])
-    const [loading, setLoading] = React.useState<boolean>(false)
+    const loading = React.useContext(LoadingContext)
 
     React.useEffect(() => {
         register({name: "categories_id"})
@@ -75,7 +76,6 @@ export const Form = () => {
     React.useEffect(() => {
         let isSubscribed = true;
         (async function loadData(){
-            setLoading(true)
             const promises = [categoryHttp.list({queryParams: {all: ''}})]
             if(id){
                 promises.push(genreHttp.get(id))
@@ -100,8 +100,6 @@ export const Form = () => {
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
                 )
-            } finally {
-                setLoading(false)
             }
         })()
 
@@ -111,7 +109,6 @@ export const Form = () => {
     }, [])
 
     async function onSubmit(formData, event){
-        setLoading(true)
         try {
             const http = !genre
                 ? genreHttp.create(formData)
@@ -134,8 +131,6 @@ export const Form = () => {
                 'Erro ao salvar Gênero',
                 {variant: 'error'}
             )
-        } finally {
-            setLoading(false)
         }
     }
 

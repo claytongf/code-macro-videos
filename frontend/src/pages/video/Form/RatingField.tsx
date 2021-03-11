@@ -4,7 +4,7 @@ import * as React from 'react';
 import Rating from '../../../components/Rating';
 
 interface RatingFieldProps {
-    value: string;
+    value: string | undefined;
     setValue: (value) => void;
     disabled: boolean;
     error: any;

@@ -108,7 +108,8 @@ const Table = () => {
         filterManager.cleanSearchText(debouncedFilterState.search),
         debouncedFilterState.pagination.page,
         debouncedFilterState.pagination.per_page,
-        debouncedFilterState.order
+        debouncedFilterState.order,
+        JSON.stringify(debouncedFilterState.extraFilter)
     ])
 
     async function getData(){
@@ -120,7 +121,12 @@ const Table = () => {
                     page: filterState.pagination.page,
                     per_page: filterState.pagination.per_page,
                     sort: filterState.order.sort,
-                    dir: filterState.order.dir
+                    dir: filterState.order.dir,
+                    ...(
+                        debouncedFilterState.extraFilter &&
+                        debouncedFilterState.extraFilter.is_active &&
+                        {is_active: debouncedFilterState.extraFilter.is_active === 'Sim' ? 1 : 0}
+                    )
                 }
             })
             if(subscribed.current){
@@ -152,12 +158,18 @@ const Table = () => {
                 ref={tableRef}
                 options={{
                     serverSide: true,
-                    responsive: 'scrollMaxHeight',
+                    responsive: 'vertical',
                     searchText: filterState.search as any,
                     page: filterState.pagination.page - 1,
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
+                    onFilterChange: (column: any, filterList) => {
+                        const columnIndex = columns.findIndex(c => c.name === column)
+                        filterManager.changeExtraFilter({
+                            [column]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
+                        })
+                    },
                     customToolbar: () => (
                         <FilterResetButton handleClick={() => filterManager.resetFilter()}/> //default
                     ),

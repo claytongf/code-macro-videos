@@ -12,6 +12,7 @@ import * as yup from '../../util/vendor/yup'
 import useFilter from '../../hooks/useFilter';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
 import categoryHttp from '../../util/http/category-http';
+import { BadgeNo, BadgeYes } from '../../components/Badge';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -53,7 +54,7 @@ const columnsDefinition: TableColumn[] = [
                 names: ['Sim', 'Não']
             },
             customBodyRender(value, tableMeta, updateValue){
-                return value ? <Chip label="Sim" color="primary"/> : <Chip label="Não" color="secondary"/>
+                return value ? <BadgeYes/> : <BadgeNo/>
             }
         },
         width: "4%"
@@ -184,12 +185,14 @@ const Table = () => {
         filterManager.cleanSearchText(debouncedFilterState.search),
         debouncedFilterState.pagination.page,
         debouncedFilterState.pagination.per_page,
-        debouncedFilterState.order
+        debouncedFilterState.order,
+        JSON.stringify(debouncedFilterState.extraFilter)
     ])
 
     async function getData(){
         setLoading(true)
         try{
+            console.log(debouncedFilterState.extraFilter && debouncedFilterState.extraFilter.is_active);
             const {data} = await genreHttp.list<ListResponse<Genre>>({
                 queryParams: {
                     search: filterManager.cleanSearchText(filterState.search),
@@ -201,6 +204,11 @@ const Table = () => {
                         debouncedFilterState.extraFilter &&
                         debouncedFilterState.extraFilter.categories &&
                         {categories: debouncedFilterState.extraFilter.categories.join(",")}
+                    ),
+                    ...(
+                        debouncedFilterState.extraFilter &&
+                        debouncedFilterState.extraFilter.is_active &&
+                        {is_active: debouncedFilterState.extraFilter.is_active[0] === 'Sim' ? 1 : 0}
                     )
                 }
             })
@@ -231,15 +239,15 @@ const Table = () => {
                 debouncedSearchTime={debounceSearchTime}
                 ref={tableRef}
                 options={{
-                    serverSideFilterList,
+                    // serverSideFilterList,
                     serverSide: true,
-                    responsive: 'scrollMaxHeight',
+                    responsive: 'vertical',
                     searchText: filterState.search as any,
                     page: filterState.pagination.page - 1,
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
-                    onFilterChange: (column, filterList) => {
+                    onFilterChange: (column: any, filterList) => {
                         const columnIndex = columns.findIndex(c => c.name === column)
                         filterManager.changeExtraFilter({
                             [column]: filterList[columnIndex].length ? filterList[columnIndex] : null

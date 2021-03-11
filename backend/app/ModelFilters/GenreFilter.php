@@ -21,4 +21,9 @@ class GenreFilter extends DefaultModelFilter
                 ->orWhereIn('name', $idsOrNames);
         });
     }
+
+    public function isActive($isActive)
+    {
+        $this->where('is_active', $isActive);
+    }
 }

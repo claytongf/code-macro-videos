@@ -1,6 +1,5 @@
 import { CircularProgress, TextField, TextFieldProps } from '@material-ui/core';
 import { Autocomplete, AutocompleteProps } from '@material-ui/lab';
-import { useSnackbar } from 'notistack';
 import * as React from 'react';
 import { useDebounce } from 'use-debounce/lib';
 
@@ -10,7 +9,12 @@ interface AsyncAutocompleteProps {
     TextFieldProps?: TextFieldProps
     AutocompleteProps?: Omit<AutocompleteProps<any, any, any, any>, 'renderInput' | 'options'>
 }
-const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
+
+export interface AsyncAutocompleteComponent {
+    clear: () => void
+}
+
+const AsyncAutocomplete = React.forwardRef<AsyncAutocompleteComponent, AsyncAutocompleteProps>((props, ref) => {
     const {AutocompleteProps, debounceTime = 300} = props;
     const {freeSolo = false, onOpen, onClose, onInputChange} = AutocompleteProps as any;
     const [open, setOpen] = React.useState(false)
@@ -18,8 +22,6 @@ const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
     const [debouncedSearchText] = useDebounce(searchText, debounceTime)
     const [loading, setLoading] = React.useState(false)
     const [options, setOptions] = React.useState([])
-
-    const snackbar = useSnackbar();
 
     const textFieldProps: TextFieldProps = {
         margin: 'normal',
@@ -36,7 +38,7 @@ const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
         open,
         options,
         loading: loading,
-
+        inputValue: searchText,
         onOpen(){
             setOpen(true)
             onOpen && onOpen()
@@ -73,8 +75,10 @@ const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
         }
     }, [open])
 
+    const useEffectCondition = freeSolo ? debouncedSearchText : open;
+
     React.useEffect(() => {
-        if(!open || debouncedSearchText === "" && freeSolo){
+        if(!open || (debouncedSearchText === "" && freeSolo)){
             return;
         }
 
@@ -93,11 +97,18 @@ const AsyncAutocomplete: React.FC<AsyncAutocompleteProps> = (props) => {
         return () => {
           isSubscribed = false;
         };
-    }, [freeSolo ? debouncedSearchText : open]);
+    }, [useEffectCondition]);
+
+    React.useImperativeHandle(ref, () => ({
+        clear: () => {
+            setSearchText("")
+            setOptions([])
+        }
+    }))
 
     return (
         <Autocomplete {...autocompleteProps}/>
     );
-};
+});
 
 export default AsyncAutocomplete;

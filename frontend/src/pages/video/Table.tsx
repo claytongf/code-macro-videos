@@ -24,9 +24,33 @@ const columnsDefinition: TableColumn[] = [
     {
         name: "title",
         label: "Título",
-        width: "43%",
+        width: "20%",
         options: {
             filter: false
+        }
+    },
+    {
+        name: "genres",
+        label: "Gêneros",
+        width: "14%",
+        options: {
+            sort: false,
+            filter: false,
+            customBodyRender: (value, tableMeta, updateValue) => {
+                return value.map(value => value.name).join(', ')
+            }
+        }
+    },
+    {
+        name: "categories",
+        label: "Categorias",
+        width: "14%",
+        options: {
+            sort: false,
+            filter: false,
+            customBodyRender: (value, tableMeta, updateValue) => {
+                return value.map(value => value.name).join(', ')
+            }
         }
     },
     {
@@ -43,7 +67,7 @@ const columnsDefinition: TableColumn[] = [
     {
         name: "actions",
         label: "Ações",
-        width: '13%',
+        width: '12%',
         options: {
             filter: false,
             sort: false,
@@ -52,7 +76,7 @@ const columnsDefinition: TableColumn[] = [
                     <IconButton
                         color={'secondary'}
                         component={Link}
-                        to={`/categories/${tableMeta.rowData[0]}/edit`}
+                        to={`/videos/${tableMeta.rowData[0]}/edit`}
                     >
                         <EditIcon/>
                     </IconButton>
@@ -86,6 +110,8 @@ const Table = () => {
         subscribed.current = true
         filterManager.pushHistory()
         getData()
+        console.log('veio');
+
         return () => {
             subscribed.current = false
             //executado quando componente estiver desmontado
@@ -138,7 +164,7 @@ const Table = () => {
                 ref={tableRef}
                 options={{
                     serverSide: true,
-                    responsive: 'scrollMaxHeight',
+                    responsive: 'vertical',
                     searchText: filterState.search as any,
                     page: filterState.pagination.page - 1,
                     rowsPerPage: filterState.pagination.per_page,

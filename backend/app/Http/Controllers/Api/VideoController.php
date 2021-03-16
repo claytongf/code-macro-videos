@@ -6,6 +6,7 @@ use App\Http\Resources\VideoResource;
 use App\Models\Video;
 use App\Rules\GenresHasCategoriesRule;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 
 class VideoController extends BasicCrudController
 {
@@ -82,5 +83,10 @@ class VideoController extends BasicCrudController
     protected function resourceCollection()
     {
         return $this->resource();
+    }
+
+    protected function queryBuilder(): Builder
+    {
+        return $this->model()::query()->with(['genres.categories', 'categories', 'castMembers']);
     }
 }

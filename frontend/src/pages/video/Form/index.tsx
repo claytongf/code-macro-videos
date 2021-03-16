@@ -17,6 +17,7 @@ import { InputFileComponent } from '../../../components/InputFile';
 import { DefaultForm } from '../../../components/DefaultForm';
 import useSnackbarFormError from '../../../hooks/useSnackbarFormError';
 import LoadingContext from '../../../components/loading/LoadingContext';
+import SnackbarUpload from '../../../components/SnackbarUpload';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -141,6 +142,18 @@ export const Form = () => {
     }, [register])
 
     React.useEffect(() => {
+        snackbar.enqueueSnackbar('', {
+            key: 'snackbar-upload',
+            persist: true,
+            anchorOrigin: {
+                vertical: 'bottom',
+                horizontal: 'right'
+            },
+            content: (key, message) => {
+                const id = key as any;
+                return <SnackbarUpload id={id} />
+            }
+        })
         if(!id){
             return
         }
@@ -168,6 +181,8 @@ export const Form = () => {
 
     async function onSubmit(formData: Video, event) {
         const sendData = omit(formData, ["genres", "categories", "cast_members"]);
+        console.log(formData);
+
         sendData["cast_members_id"] = formData["cast_members"].map((cast_member) => cast_member.id);
         sendData["categories_id"] = formData["categories"].map((category) => category.id);
         sendData["genres_id"] = formData["genres"].map((genre) => genre.id);

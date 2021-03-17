@@ -138,7 +138,7 @@ export const Form = () => {
     ) as React.MutableRefObject<{[key: string]: React.MutableRefObject<InputFileComponent>}>;
 
     React.useEffect(() => {
-        ['rating', 'opened', 'genres', 'categories', ...fileFields].forEach(name => register({name}));
+        ['rating', 'opened', 'genres', 'categories', 'cast_members', ...fileFields].forEach(name => register({name}));
     }, [register])
 
     React.useEffect(() => {

@@ -85,50 +85,33 @@ const rowsPerPage = 15;
 const rowsPerPageOptions = [15, 25, 50];
 
 const Table = () => {
-    const snackbar = useSnackbar()
+    const {enqueueSnackbar} = useSnackbar()
     const subscribed = React.useRef(true)
     const [data, setData] = React.useState<Category[]>([])
     const loading = React.useContext(LoadingContext)
     const tableRef = React.useRef() as React.MutableRefObject<MuiDataTableRefComponent>
     const {openDeleteDialog, setOpenDeleteDialog, rowsToDelete, setRowsToDelete } = useDeleteCollection();
 
-    const {columns, filterManager, filterState, debouncedFilterState, totalRecords, setTotalRecords} = useFilter({
+    const {columns, filterManager, cleanSearchText, filterState, debouncedFilterState, totalRecords, setTotalRecords} = useFilter({
         columns: columnsDefinition,
         debounceTime: debounceTime,
         rowsPerPage,
         rowsPerPageOptions,
         tableRef
     })
+    const searchText = cleanSearchText(filterState.search)
 
-    React.useEffect(() => {
-        subscribed.current = true
-        filterManager.pushHistory()
-        getData()
-        return () => {
-            subscribed.current = false
-            //executado quando componente estiver desmontado
-        }
-    }, [
-        filterManager.cleanSearchText(debouncedFilterState.search),
-        debouncedFilterState.pagination.page,
-        debouncedFilterState.pagination.per_page,
-        debouncedFilterState.order,
-        JSON.stringify(debouncedFilterState.extraFilter)
-    ])
-
-    async function getData(){
+    const getData = React.useCallback(async ({search, page, per_page, sort, dir, is_active}) => {
         try{
             const {data} = await categoryHttp.list<ListResponse<Category>>({
                 queryParams: {
-                    search: filterManager.cleanSearchText(filterState.search),
-                    page: filterState.pagination.page,
-                    per_page: filterState.pagination.per_page,
-                    sort: filterState.order.sort,
-                    dir: filterState.order.dir,
+                    search,
+                    page,
+                    per_page,
+                    sort,
+                    dir,
                     ...(
-                        debouncedFilterState.extraFilter &&
-                        debouncedFilterState.extraFilter.is_active &&
-                        {is_active: debouncedFilterState.extraFilter.is_active === 'Sim' ? 1 : 0}
+                        is_active && {is_active: is_active}
                     )
                 }
             })
@@ -144,12 +127,39 @@ const Table = () => {
             if(categoryHttp.isCancelledRequest(error)){
                 return;
             }
-            snackbar.enqueueSnackbar(
+            enqueueSnackbar(
                 'Não foi possível carregar as informações',
                 {variant: 'error'}
             )
         }
-    }
+    },[enqueueSnackbar, setOpenDeleteDialog, openDeleteDialog, setTotalRecords])
+
+    React.useEffect(() => {
+        subscribed.current = true
+        getData({
+            search: searchText,
+            page: filterState.pagination.page,
+            per_page: filterState.pagination.per_page,
+            sort: filterState.order.sort,
+            dir: filterState.order.dir,
+            ...(
+                debouncedFilterState.extraFilter &&
+                debouncedFilterState.extraFilter.is_active &&
+                {is_active: debouncedFilterState.extraFilter.is_active}
+            )
+        })
+        return () => {
+            subscribed.current = false
+            //executado quando componente estiver desmontado
+        }
+    }, [
+        getData,
+        searchText,
+        filterState.pagination.page,
+        filterState.pagination.per_page,
+        filterState.order,
+        debouncedFilterState.extraFilter
+    ])
 
     function deleteRows(confirmed: boolean){
         if(!confirmed){
@@ -163,19 +173,30 @@ const Table = () => {
         categoryHttp
             .deleteCollection({ids})
             .then(response => {
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Registros excluídos com sucesso', {variant: 'success'}
                 )
                 if(rowsToDelete.data.length === filterState.pagination.per_page && filterState.pagination.page > 1){
                     const page = filterState.pagination.page - 2;
                     filterManager.changePage(page)
                 }else{
-                    getData()
+                    getData({
+                        search: cleanSearchText(filterState.search),
+                        page: filterState.pagination.page,
+                        per_page: filterState.pagination.per_page,
+                        sort: filterState.order.sort,
+                        dir: filterState.order.dir,
+                        ...(
+                            debouncedFilterState.extraFilter &&
+                            debouncedFilterState.extraFilter.is_active &&
+                            {is_active: debouncedFilterState.extraFilter.is_active}
+                        )
+                    })
                 }
             })
             .catch((error) => {
                 console.error(error)
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Não foi possível excluir os registros', {variant: 'error'}
                 )
             })
@@ -200,10 +221,10 @@ const Table = () => {
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
-                    onFilterChange: (column: any, filterList) => {
+                    onFilterChange: (column, filterList) => {
                         const columnIndex = columns.findIndex(c => c.name === column)
                         filterManager.changeExtraFilter({
-                            [column]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
+                            [column as string]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
                         })
                     },
                     customToolbar: () => (

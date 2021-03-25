@@ -45,7 +45,10 @@ class VideoController extends BasicCrudController
     {
         $obj = $this->findOrFail($id);
         $this->addRuleIfGenreHasCategories($request);
-        $validatedData = $this->validate($request, $this->rulesUpdate());
+        $validatedData = $this->validate(
+            $request,
+            $request->isMethod('PUT') ? $this->rulesUpdate() : $this->rulesPatch()
+        );
         $obj->update($validatedData);
         $resource = $this->resource();
         return new $resource($obj);
@@ -87,6 +90,13 @@ class VideoController extends BasicCrudController
 
     protected function queryBuilder(): Builder
     {
-        return $this->model()::query()->with(['genres.categories', 'categories', 'castMembers']);
+        $action = \Route::getCurrentRoute()->getAction()['uses'];
+        return parent::queryBuilder()->with([
+            strpos($action, 'index') !== false
+                ? 'genres'
+                : 'genres.categories',
+            'categories',
+            'castMembers'
+        ]);
     }
 }

@@ -1,7 +1,7 @@
 FROM php:7.4.13-fpm-alpine3.12
 
-RUN apk add --no-cache shadow openssl bash mysql-client nodejs npm freetype-dev libjpeg-turbo-dev libpng-dev git
-RUN docker-php-ext-install pdo pdo_mysql
+RUN apk add --no-cache shadow openssl bash mysql-client nodejs npm freetype-dev libjpeg-turbo-dev libpng-dev git libzip-dev
+RUN docker-php-ext-install pdo pdo_mysql bcmath zip
 RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/
 RUN docker-php-ext-install -j$(nproc) gd
 

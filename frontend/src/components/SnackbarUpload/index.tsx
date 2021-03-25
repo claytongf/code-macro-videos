@@ -5,6 +5,9 @@ import React, { useState } from "react";
 import { useSnackbar } from "notistack";
 import classnames from "classnames";
 import UploadItem from "./UploadItem";
+import { Upload, UploadModule } from "../../store/upload/types";
+import { useSelector } from "react-redux";
+import { countInProgress } from "../../store/upload/getters";
 
 const useStyles = makeStyles((theme: Theme) => ({
     card: {
@@ -49,26 +52,34 @@ const SnackbarUpload = React.forwardRef<any, SnackbarUploadProps>((props, ref) =
     const {closeSnackbar} = useSnackbar();
     const [expanded, setExpanded] = useState(true)
 
+    const uploads = useSelector<UploadModule, Upload[]>(
+        (state) => state.upload.uploads
+    )
+
+    const totalInProgress = countInProgress(uploads)
+
     return (
         <Card ref={ref} className={classes.card}>
             <CardActions classes={{  root: classes.cardActionRoot }}>
                 <Typography variant="subtitle2" className={classes.title}>
-                    Fazendo upload de 10 vídeo(s)
+                    Fazendo upload de {totalInProgress} vídeo(s)
                 </Typography>
                 <div className={classes.icons}>
                     <IconButton color={"inherit"} onClick={() => setExpanded(!expanded)} className={classnames(classes.expand, {[classes.expandOpen]: !expanded})}>
                         <ExpandMoreIcon />
                     </IconButton>
-                    <IconButton color={"inherit"} onClick={() => closeSnackbar}>
+                    <IconButton color={"inherit"} onClick={() => closeSnackbar(id)}>
                         <CloseIcon />
                     </IconButton>
                 </div>
             </CardActions>
             <Collapse in={expanded}>
                 <List className={classes.list}>
-                    <UploadItem/>
-                    <UploadItem/>
-                    <UploadItem/>
+                    {
+                        uploads.map((upload, key) => (
+                            <UploadItem key={key} upload={upload}/>
+                        ))
+                    }
                 </List>
             </Collapse>
         </Card>

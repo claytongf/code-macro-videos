@@ -54,7 +54,7 @@ export const Form = () => {
     const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch, formState} = useForm<{name: string, is_active: boolean}>({resolver, defaultValues: {is_active: true}})
 
     useSnackbarFormError(formState.submitCount, errors)
-    const snackbar = useSnackbar();
+    const {enqueueSnackbar} = useSnackbar();
     const history = useHistory()
     const {id} = useParams<{id:string}>()
     const [category, setCategory] = React.useState<Category | null>(null)
@@ -78,7 +78,7 @@ export const Form = () => {
                 }
             } catch (error) {
                 console.error(error);
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
                 )
@@ -88,7 +88,7 @@ export const Form = () => {
         return () => {
             isSubscribed = false
         }
-    }, [])
+    }, [id, reset, enqueueSnackbar])
 
     async function onSubmit(formData, event){
         try {
@@ -96,7 +96,7 @@ export const Form = () => {
                 ? categoryHttp.create(formData)
                 : categoryHttp.update(category.id, formData)
                 const {data} = await http
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Categoria salva com sucesso',
                     {variant: 'success'}
                 )
@@ -109,7 +109,7 @@ export const Form = () => {
                 })
         } catch(error) {
             console.log(error)
-            snackbar.enqueueSnackbar(
+            enqueueSnackbar(
                 'Erro ao salvar categoria',
                 {variant: 'error'}
             )

@@ -88,20 +88,14 @@ const rowsPerPage = 15;
 const rowsPerPageOptions = [15, 25, 50];
 
 const Table = () => {
-    const snackbar = useSnackbar()
+    const {enqueueSnackbar} = useSnackbar()
     const subscribed = React.useRef(true)
     const [data, setData] = React.useState<CastMember[]>([])
     const loading = React.useContext(LoadingContext)
     const {openDeleteDialog, setOpenDeleteDialog, rowsToDelete, setRowsToDelete } = useDeleteCollection();
     const tableRef = React.useRef() as React.MutableRefObject<MuiDataTableRefComponent>
 
-    const {columns, filterManager, filterState, debouncedFilterState, totalRecords, setTotalRecords} = useFilter({
-        columns: columnsDefinition,
-        debounceTime: debounceTime,
-        rowsPerPage,
-        rowsPerPageOptions,
-        tableRef,
-        extraFilter: {
+    const extraFilter = React.useMemo(() => ({
             createValidationSchema: () => {
                 return yup.object().shape({
                     type: yup.string()
@@ -127,8 +121,16 @@ const Table = () => {
                     type: queryParams.get('type')
                 }
             }
-        }
+    }), [])
+    const {columns, filterManager, cleanSearchText, filterState, debouncedFilterState, totalRecords, setTotalRecords} = useFilter({
+        columns: columnsDefinition,
+        debounceTime: debounceTime,
+        rowsPerPage,
+        rowsPerPageOptions,
+        tableRef,
+        extraFilter
     })
+    const searchText = cleanSearchText(filterState.search)
 
     const indexColumnType = columns.findIndex(c => c.name === 'type')
     const columnType = columns[indexColumnType]
@@ -140,35 +142,17 @@ const Table = () => {
         serverSideFilterList[indexColumnType] = [typeFilterValue]
     }
 
-    React.useEffect(() => {
-        subscribed.current = true
-        filterManager.pushHistory()
-        getData()
-        return () => {
-            subscribed.current = false
-            //executado quando componente estiver desmontado
-        }
-    }, [
-        filterManager.cleanSearchText(debouncedFilterState.search),
-        debouncedFilterState.pagination.page,
-        debouncedFilterState.pagination.per_page,
-        debouncedFilterState.order,
-        JSON.stringify(debouncedFilterState.extraFilter)
-    ])
-
-    async function getData(){
+    const getData = React.useCallback(async ({search, page, per_page, sort, dir, type}) => {
         try{
             const {data} = await castMemberHttp.list<ListResponse<CastMember>>({
                 queryParams: {
-                    search: filterManager.cleanSearchText(filterState.search),
-                    page: filterState.pagination.page,
-                    per_page: filterState.pagination.per_page,
-                    sort: filterState.order.sort,
-                    dir: filterState.order.dir,
+                    search,
+                    page,
+                    per_page,
+                    sort,
+                    dir,
                     ...(
-                        debouncedFilterState.extraFilter &&
-                        debouncedFilterState.extraFilter.type &&
-                        {type: invert(CastMemberTypeMap)[debouncedFilterState.extraFilter.type]}
+                        type && {type: invert(CastMemberTypeMap)[type]}
                     )
                 }
             })
@@ -184,12 +168,39 @@ const Table = () => {
             if(castMemberHttp.isCancelledRequest(error)){
                 return;
             }
-            snackbar.enqueueSnackbar(
+            enqueueSnackbar(
                 'Não foi possível carregar as informações',
                 {variant: 'error'}
             )
         }
-    }
+    }, [enqueueSnackbar, setTotalRecords, openDeleteDialog, setOpenDeleteDialog])
+
+    React.useEffect(() => {
+        subscribed.current = true
+        getData({
+            search: searchText,
+            page: filterState.pagination.page,
+            per_page: filterState.pagination.per_page,
+            sort: filterState.order.sort,
+            dir: filterState.order.dir,
+            ...(
+                debouncedFilterState.extraFilter &&
+                debouncedFilterState.extraFilter.type &&
+                {type: debouncedFilterState.extraFilter.type}
+            )
+        })
+        return () => {
+            subscribed.current = false
+            //executado quando componente estiver desmontado
+        }
+    }, [
+        getData,
+        searchText,
+        filterState.pagination.page,
+        filterState.pagination.per_page,
+        filterState.order,
+        debouncedFilterState.extraFilter
+    ])
 
     function deleteRows(confirmed: boolean){
         if(!confirmed){
@@ -203,19 +214,30 @@ const Table = () => {
         castMemberHttp
             .deleteCollection({ids})
             .then(response => {
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Registros excluídos com sucesso', {variant: 'success'}
                 )
                 if(rowsToDelete.data.length === filterState.pagination.per_page && filterState.pagination.page > 1){
                     const page = filterState.pagination.page - 2;
                     filterManager.changePage(page)
                 }else{
-                    getData()
+                    getData({
+                        search: searchText,
+                        page: filterState.pagination.page,
+                        per_page: filterState.pagination.per_page,
+                        sort: filterState.order.sort,
+                        dir: filterState.order.dir,
+                        ...(
+                            debouncedFilterState.extraFilter &&
+                            debouncedFilterState.extraFilter.type &&
+                            {type: debouncedFilterState.extraFilter.type}
+                        )
+                    })
                 }
             })
             .catch((error) => {
                 console.error(error)
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Não foi possível excluir os registros', {variant: 'error'}
                 )
             })

@@ -1,4 +1,4 @@
-import { Card, CardContent, Checkbox, FormControlLabel, FormHelperText, Grid, makeStyles, TextField, Theme, Typography, useMediaQuery, useTheme } from '@material-ui/core';
+import { Card, CardContent, Checkbox, FormControlLabel, Grid, makeStyles, TextField, Theme, Typography, useMediaQuery, useTheme } from '@material-ui/core';
 import { useSnackbar } from 'notistack';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
@@ -18,6 +18,9 @@ import { DefaultForm } from '../../../components/DefaultForm';
 import useSnackbarFormError from '../../../hooks/useSnackbarFormError';
 import LoadingContext from '../../../components/loading/LoadingContext';
 import SnackbarUpload from '../../../components/SnackbarUpload';
+import { useDispatch } from 'react-redux';
+import { FileInfo } from '../../../store/upload/types';
+import { Creators } from '../../../store/upload';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -123,8 +126,9 @@ export const Form = () => {
     useSnackbarFormError(formState.submitCount, errors)
 
     const classes = useStyles()
-    const snackbar = useSnackbar();
+    const {enqueueSnackbar} = useSnackbar();
     const history = useHistory()
+    const dispatch = useDispatch();
     const {id} = useParams<{id:string}>()
     const [video, setVideo] = React.useState<Video | null>(null)
     const loading = React.useContext(LoadingContext)
@@ -137,12 +141,22 @@ export const Form = () => {
         zipObject(fileFields, fileFields.map(() => React.createRef()))
     ) as React.MutableRefObject<{[key: string]: React.MutableRefObject<InputFileComponent>}>;
 
+    const resetForm = React.useCallback((data) => {
+        Object.keys(uploadsRef.current).forEach(
+            field => uploadsRef.current[field].current.clear()
+        );
+        castMemberRef.current.clear();
+        genreRef.current.clear();
+        categoryRef.current.clear();
+        reset(data);
+    }, [reset, uploadsRef, castMemberRef, genreRef, categoryRef])
+
     React.useEffect(() => {
         ['rating', 'opened', 'genres', 'categories', 'cast_members', ...fileFields].forEach(name => register({name}));
     }, [register])
 
     React.useEffect(() => {
-        snackbar.enqueueSnackbar('', {
+        enqueueSnackbar('', {
             key: 'snackbar-upload',
             persist: true,
             anchorOrigin: {
@@ -163,11 +177,11 @@ export const Form = () => {
                 const {data} = await videoHttp.get(id)
                 if(isSubscribed){
                     setVideo(data.data)
-                    reset(data.data)
+                    resetForm(data.data)
                 }
             } catch (error) {
                 console.error(error);
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
                 )
@@ -177,11 +191,12 @@ export const Form = () => {
         return () => {
             isSubscribed = false
         }
-    }, [])
+    }, [id, resetForm, enqueueSnackbar])
 
     async function onSubmit(formData: Video, event) {
-        const sendData = omit(formData, ["genres", "categories", "cast_members"]);
-        console.log(formData);
+        const sendData = omit(
+            formData, [...fileFields, "genres", "categories", "cast_members"]
+        );
 
         sendData["cast_members_id"] = formData["cast_members"].map((cast_member) => cast_member.id);
         sendData["categories_id"] = formData["categories"].map((category) => category.id);
@@ -190,28 +205,44 @@ export const Form = () => {
         try {
             const http = !video
                 ? videoHttp.create(sendData)
-                : videoHttp.update(video.id, {...sendData, _method: 'PUT'}, {http: {usePost: true}});
+                : videoHttp.update(video.id, sendData);
 
             const { data } = await http;
-            snackbar.enqueueSnackbar("Video salvo com sucesso!", {variant: "success"});
+            enqueueSnackbar("Video salvo com sucesso!", {variant: "success"});
+            uploadFiles(data.data)
             id && resetForm(video);
             setTimeout(() => {
                 event ? (!id && history.push(`/videos/${data.data.id}/edit`)) : history.push('/videos')
             });
         } catch (error) {
             console.log(error);
-            snackbar.enqueueSnackbar("Falha ao salvar Video", {variant: "error"});
+            enqueueSnackbar("Falha ao salvar Video", {variant: "error"});
         }
     }
 
-    function resetForm(data) {
-        Object.keys(uploadsRef.current).forEach(
-            field => uploadsRef.current[field].current.clear()
-        );
-        castMemberRef && castMemberRef.current && castMemberRef.current.clear();
-        genreRef && genreRef.current && genreRef.current.clear();
-        categoryRef && categoryRef.current && categoryRef.current.clear();
-        reset(data);
+    function uploadFiles(video){
+        const files: FileInfo[] = fileFields
+            .filter(fileField => getValues()[fileField])
+            .map(fileField => ({fileField, file: getValues()[fileField]}))
+
+            if(!files.length){
+                return;
+            }
+
+        dispatch(Creators.addUpload({video, files}))
+
+        enqueueSnackbar('', {
+            key: 'snackbar-upload',
+            persist: true,
+            anchorOrigin: {
+                vertical: 'bottom',
+                horizontal: 'right'
+            },
+            content: (key, message) => {
+                const id = key as any;
+                return <SnackbarUpload id={id}/>
+            }
+        })
     }
 
     return (
@@ -302,14 +333,6 @@ export const Form = () => {
                                 disabled={loading}
                             />
                         </Grid>
-                        <Grid item xs={12}>
-                            <FormHelperText>
-                                Escolha os gêneros do vídeo
-                            </FormHelperText>
-                            <FormHelperText>
-                                Escolha pelo menos uma categoria de cada gênero
-                            </FormHelperText>
-                        </Grid>
                     </Grid>
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -320,7 +343,7 @@ export const Form = () => {
                         disabled={loading}
                         FormControlProps={{
                             margin: isGreaterMd ? 'none' : 'normal'
-                         }}
+                        }}
                     />
                     <Card className={classes.cardUpload}>
                         <CardContent>

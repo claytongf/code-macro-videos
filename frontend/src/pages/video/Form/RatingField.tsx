@@ -1,10 +1,9 @@
-// @flow
 import { Box, FormControl, FormControlLabel, FormControlLabelProps, FormControlProps, FormHelperText, FormLabel, Radio, RadioGroup } from '@material-ui/core';
 import * as React from 'react';
 import Rating from '../../../components/Rating';
 
 interface RatingFieldProps {
-    value: string | undefined;
+    value: string;
     setValue: (value) => void;
     disabled: boolean;
     error: any;

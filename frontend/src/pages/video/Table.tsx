@@ -95,14 +95,14 @@ const rowsPerPage = 15;
 const rowsPerPageOptions = [15, 25, 50];
 
 const Table = () => {
-    const snackbar = useSnackbar()
+    const {enqueueSnackbar} = useSnackbar()
     const subscribed = React.useRef(true)
     const [data, setData] = React.useState<Video[]>([])
     const loading = React.useContext(LoadingContext)
     const tableRef = React.useRef() as React.MutableRefObject<MuiDataTableRefComponent>
     const {openDeleteDialog, setOpenDeleteDialog, rowsToDelete, setRowsToDelete } = useDeleteCollection();
 
-    const {columns, filterManager, filterState, debouncedFilterState, totalRecords, setTotalRecords} = useFilter({
+    const {columns, filterManager, filterState, cleanSearchText, totalRecords, setTotalRecords} = useFilter({
         columns: columnsDefinition,
         debounceTime: debounceTime,
         rowsPerPage,
@@ -110,31 +110,17 @@ const Table = () => {
         tableRef
     })
 
-    React.useEffect(() => {
-        subscribed.current = true
-        filterManager.pushHistory()
-        getData()
+    const searchText = cleanSearchText(filterState.search)
 
-        return () => {
-            subscribed.current = false
-            //executado quando componente estiver desmontado
-        }
-    }, [
-        filterManager.cleanSearchText(debouncedFilterState.search),
-        debouncedFilterState.pagination.page,
-        debouncedFilterState.pagination.per_page,
-        debouncedFilterState.order
-    ])
-
-    async function getData(){
+    const getData = React.useCallback(async ({search, page, per_page, sort, dir}) => {
         try{
             const {data} = await videoHttp.list<ListResponse<Video>>({
                 queryParams: {
-                    search: filterManager.cleanSearchText(filterState.search),
-                    page: filterState.pagination.page,
-                    per_page: filterState.pagination.per_page,
-                    sort: filterState.order.sort,
-                    dir: filterState.order.dir
+                    search,
+                    page,
+                    per_page,
+                    sort,
+                    dir
                 }
             })
             if(subscribed.current){
@@ -149,12 +135,34 @@ const Table = () => {
             if(videoHttp.isCancelledRequest(error)){
                 return;
             }
-            snackbar.enqueueSnackbar(
+            enqueueSnackbar(
                 'Não foi possível carregar as informações',
                 {variant: 'error'}
             )
         }
-    }
+    }, [enqueueSnackbar, setTotalRecords, openDeleteDialog, setOpenDeleteDialog])
+
+    React.useEffect(() => {
+        subscribed.current = true
+        getData({
+            search: searchText,
+            page: filterState.pagination.page,
+            per_page: filterState.pagination.per_page,
+            sort: filterState.order.sort,
+            dir: filterState.order.dir
+        })
+
+        return () => {
+            subscribed.current = false
+            //executado quando componente estiver desmontado
+        }
+    }, [
+        getData,
+        searchText,
+        filterState.pagination.page,
+        filterState.pagination.per_page,
+        filterState.order
+    ])
 
     function deleteRows(confirmed: boolean){
         if(!confirmed){
@@ -168,19 +176,25 @@ const Table = () => {
         videoHttp
             .deleteCollection({ids})
             .then(response => {
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Registros excluídos com sucesso', {variant: 'success'}
                 )
                 if(rowsToDelete.data.length === filterState.pagination.per_page && filterState.pagination.page > 1){
                     const page = filterState.pagination.page - 2;
                     filterManager.changePage(page)
                 }else{
-                    getData()
+                    getData({
+                        search: searchText,
+                        page: filterState.pagination.page,
+                        per_page: filterState.pagination.per_page,
+                        sort: filterState.order.sort,
+                        dir: filterState.order.dir
+                    })
                 }
             })
             .catch((error) => {
                 console.error(error)
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Não foi possível excluir os registros', {variant: 'error'}
                 )
             })

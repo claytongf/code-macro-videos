@@ -9,20 +9,20 @@ export const LoadingProvider = (props) => {
     React.useMemo(() => {
         let isSubscribed = true
         const requestIds = addGlobalRequestInterceptor((config) => {
-            if(isSubscribed){
+            if(isSubscribed && !config.headers.hasOwnProperty('x-ignore-loading')){
                 setLoading(true)
                 setCountRequest((prevCountRequest) => prevCountRequest + 1)
             }
             return config
         })
         const responseIds = addGlobalResponseInterceptor((response) => {
-            if(isSubscribed){
+            if(isSubscribed && !response.config.headers.hasOwnProperty('x-ignore-loading')){
                 decrementCountRequest()
 
             }
             return response
         }, (error) => {
-            if(isSubscribed){
+            if(isSubscribed && !error.config.headers.hasOwnProperty('x-ignore-loading')){
                 decrementCountRequest()
 
             }
@@ -33,7 +33,7 @@ export const LoadingProvider = (props) => {
             removeGlobalRequestInterceptor(requestIds);
             removeGlobalResponseInterceptor(responseIds);
         }
-    }, [true])
+    }, [])
 
     React.useEffect(() => {
         if(!countRequest){

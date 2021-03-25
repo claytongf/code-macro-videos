@@ -1,7 +1,6 @@
-// @flow
 import { Checkbox, MenuItem, TextField } from '@material-ui/core';
 import * as React from 'react';
-import { NestedValue, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import categoryHttp from '../../util/http/category-http';
 import * as yup from '../../util/vendor/yup'
 import genreHttp from '../../util/http/genre-http';
@@ -54,7 +53,7 @@ export const Form = () => {
         []
     );
     const resolver = useYupValidationResolver(validationSchema);
-    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch, formState} = useForm<{name: string, categories_id: NestedValue<string[]>}>({resolver,
+    const {register, handleSubmit, getValues, setValue, trigger, errors, reset, watch, formState} = useForm<{name, categories_id}>({resolver,
         defaultValues: {
             categories_id: []
         }
@@ -62,7 +61,7 @@ export const Form = () => {
 
     useSnackbarFormError(formState.submitCount, errors)
 
-    const snackbar = useSnackbar();
+    const {enqueueSnackbar} = useSnackbar();
     const history = useHistory()
     const {id} = useParams<{id:string}>()
     const [genre, setGenre] = React.useState<Genre | null>(null)
@@ -96,7 +95,7 @@ export const Form = () => {
 
             } catch (error) {
                 console.error(error);
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Não foi possível carregar as informações',
                     {variant: 'error'}
                 )
@@ -106,7 +105,7 @@ export const Form = () => {
         return () => {
             isSubscribed = false
         }
-    }, [])
+    }, [id, reset, enqueueSnackbar])
 
     async function onSubmit(formData, event){
         try {
@@ -114,7 +113,7 @@ export const Form = () => {
                 ? genreHttp.create(formData)
                 : genreHttp.update(genre.id, formData)
                 const {data} = await http
-                snackbar.enqueueSnackbar(
+                enqueueSnackbar(
                     'Gênero salvo com sucesso',
                     {variant: 'success'}
                 )
@@ -127,7 +126,7 @@ export const Form = () => {
                 })
         } catch(error) {
             console.log(error)
-            snackbar.enqueueSnackbar(
+            enqueueSnackbar(
                 'Erro ao salvar Gênero',
                 {variant: 'error'}
             )

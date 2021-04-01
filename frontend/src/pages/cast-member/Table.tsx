@@ -261,10 +261,16 @@ const Table = () => {
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
-                    onFilterChange: (column: any, filterList) => {
+                    onFilterChange: (column, filterList) => {
                         const columnIndex = columns.findIndex(c => c.name === column)
+                        if(column === null){
+                            filterManager.changeExtraFilter({
+                                type: null
+                            })
+                            return
+                        }
                         filterManager.changeExtraFilter({
-                            [column]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
+                            [column as string]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
                         })
                     },
                     customToolbar: () => (

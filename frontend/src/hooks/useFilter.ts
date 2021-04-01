@@ -144,7 +144,10 @@ export default function useFilter(options: UseFilterOptions){
             }
         }
         const oldState = locationState
-        const nextState = debouncedFilterState
+        const nextState = {
+            ...debouncedFilterState,
+            search: cleanSearchText(debouncedFilterState.search),
+        };
         if(isEqual(oldState, nextState)){
             return
         }

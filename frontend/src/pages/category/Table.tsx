@@ -223,6 +223,12 @@ const Table = () => {
                     count: totalRecords,
                     onFilterChange: (column, filterList) => {
                         const columnIndex = columns.findIndex(c => c.name === column)
+                        if(column === null){
+                            filterManager.changeExtraFilter({
+                                is_active: null
+                            })
+                            return
+                        }
                         filterManager.changeExtraFilter({
                             [column as string]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
                         })
